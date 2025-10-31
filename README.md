@@ -18,6 +18,9 @@
 5. Conversation is logged; skill usage counters may be updated for future recommendations.
 
 ## User personas
+Priya — Senior Engineer
+Goal: Be discoverable when colleagues need her expertise.
+Scenario: Her React skill appears in suggestions when teammates ask React questions; she receives an opt‑in notification.
 
 ## To do
 - [x] Double confirm when deleting conversation
