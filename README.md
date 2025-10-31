@@ -18,6 +18,13 @@
 5. Conversation is logged; skill usage counters may be updated for future recommendations.
 
 ## User personas
+#Four User Personnas:
+
+Sam — Product Manager
+Goal: Get a quick, team-aware answer or a referral to the right teammate.
+Scenario: Asks “How do we track onboarding metrics?” and is suggested to talk to Maya, who owns analytics.
+
+
 
 ## To do
 - [x] Double confirm when deleting conversation
