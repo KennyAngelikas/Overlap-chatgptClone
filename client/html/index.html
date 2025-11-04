@@ -14,8 +14,11 @@
         <link rel="icon" type="image/png" sizes="32x32" href="/assets/img/favicon-32x32.png">
         <link rel="icon" type="image/png" sizes="16x16" href="/assets/img/favicon-16x16.png">
         <link rel="manifest" href="/assets/img/site.webmanifest">
-        <script src="/assets/js/icons.js"></script>
-        <script src="/assets/js/chat.js" defer></script>
+    <script src="/assets/js/icons.js"></script>
+    <!-- load legacy vendor scripts first, then the module entrypoint -->
+    <script src="/assets/js/highlight.min.js"></script>
+    <script src="/assets/js/highlightjs-copy.min.js"></script>
+    <script type="module" src="/assets/js/main.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/markdown-it@latest/dist/markdown-it.min.js"></script>
         <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@latest/build/styles/base16/dracula.min.css">
         <script>
@@ -55,34 +58,28 @@
                 background: #8b3dff; 
             }
         </style>
-        <script src="/assets/js/highlight.min.js"></script>
-        <script src="/assets/js/highlightjs-copy.min.js"></script>
-        <script>window.conversation_id = `{{chat_id}}`</script>
+    <script>window.conversation_id = `{{chat_id}}`</script>
         <title>ChatGPT</title>
     </head>
     <body>
         <div class="gradient"></div>
         <div class="row">
             <div class="box conversations">
-                <div class="top">
-                    <button class="new_convo" onclick="new_conversation()">
+                <div class="top" id="conversations">
+                    <button class="new_convo" id="new-convo-button">
                         <i class="fa-regular fa-plus"></i>
                         <span>New Conversation</span>
                     </button>
+                    <!-- dedicated list container so JS can replace items without
+                         removing the New Conversation button or spinner -->
+                    <div id="conversation-list" class="conversation-list"></div>
                     <div class="spinner"></div>
                 </div>
                 <div class="bottom_buttons">
-                    <button onclick="delete_conversations()">
+                    <button id="clear-conversations-button">
                         <i class="fa-regular fa-trash"></i>
                         <span>Clear Conversations</span>
                     </button>
-                    <div class="info">
-                        <i class="fa-regular fa-circle-info"></i>
-                        <span class="convo-title">By: @xtekky<br>
-                            Version: 0.0.1-beta<br>
-                            Release: 2023-04-18<br>
-                        </span>
-                    </div>
                 </div>
             </div>
             <div class="conversation disable-scrollbars">

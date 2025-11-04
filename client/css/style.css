@@ -47,7 +47,11 @@
 html,
 body {
     scroll-behavior: smooth;
+    /* Keep the overall page from scrolling — the app will make the chat
+       messages area the only scrollable region. This keeps the input and
+       header always visible. */
     overflow: hidden;
+    height: 100%;
 }
 
 body {
@@ -60,7 +64,8 @@ body {
 .row {
     display: flex;
     gap: var(--section-gap);
-    height: 100%;
+    /* occupy the viewport (accounting for body padding) */
+    height: calc(100vh - 2 * var(--section-gap));
 }
 
 .box {
@@ -76,8 +81,11 @@ body {
 .conversations {
     max-width: 260px;
     padding: var(--section-gap);
-    overflow: auto;
-    flex-shrink: 0;
+    /* keep the left sidebar static and visible; do not let the page scroll */
+    overflow: visible;
+    /* make the sidebar a fixed column so it doesn't collapse to zero width */
+    flex: 0 0 260px;
+    width: 260px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -86,9 +94,12 @@ body {
 .conversation {
     width: 100%;
     min-height: 50%;
-    height: 100vh;
-    overflow-y: scroll;
-    overflow-x: hidden;
+    /* Fill remaining vertical space inside .row. The messages area will
+       scroll independently; the input stays fixed at the bottom of this box. */
+    /* allow the conversation column to grow and take remaining horizontal space */
+    flex: 1 1 auto;
+    height: 100%;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     gap: 15px;
@@ -99,13 +110,16 @@ body {
     display: flex;
     flex-direction: column;
     overflow-wrap: break-word;
-    overflow-y: inherit;
+    /* messages area takes remaining space and scrolls */
+    flex: 1 1 auto;
+    overflow-y: auto;
     overflow-x: hidden;
-    padding-bottom: 50px;
+    padding-bottom: 12px;
 }
 
 .conversation .user-input {
-    max-height: 10vh;
+    /* keep input area fixed height so layout is predictable */
+    flex: 0 0 auto;
 }
 
 .conversation .user-input input {
@@ -488,7 +502,25 @@ select {
     display: flex;
     flex-direction: column;
     gap: 16px;
-    overflow: auto;
+    /* allow the left-top area to scroll vertically if conversation list grows */
+    overflow-y: auto;
+}
+
+/* Styles for the conversation list container we render into */
+.conversation-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: calc(100vh - 260px);
+    overflow-y: auto;
+}
+
+.conversation-list-items .no-convos {
+    color: var(--colour-3);
+    opacity: 0.8;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px dashed var(--conversations);
 }
 
 #cursor {
@@ -632,7 +664,8 @@ a:-webkit-any-link {
 .conversation .user-input textarea {
     font-size: 15px;
     width: 100%;
-    height: 100%;
+    /* give a static-ish size so layout doesn't jump */
+    height: 110px;
     padding: 12px 15px;
     background: none;
     border: none;
@@ -640,7 +673,7 @@ a:-webkit-any-link {
     color: var(--colour-3);
 
     resize: vertical;
-    max-height: 150px;
+    max-height: 180px;
     min-height: 80px;
 }
 
@@ -813,3 +846,48 @@ a:-webkit-any-link {
     --colour-3: hsl(209 50% 90%);
     --conversations: hsl(209 50% 80%);
 }
+
+/* Small layout fixes for input and new-convo visibility */
+.conversations .top {
+    /* ensure the top area can always show the new conversation button */
+    min-height: 84px;
+    padding-bottom: 8px;
+}
+
+.new_convo {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+}
+
+.box.input-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+}
+
+.input-box textarea#message-input {
+    width: 100%;
+    min-height: 80px;
+    max-height: 180px;
+    resize: vertical;
+    padding: 12px;
+    box-sizing: border-box;
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--colour-3);
+}
+
+#send-button {
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+/* ensure the input box stays above decorative gradients */
+.box.input-box { z-index: 2; }
