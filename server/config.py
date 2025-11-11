@@ -1,3 +1,15 @@
+# config.py
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# --- API Keys ---
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_API_BASE = os.getenv("OPENAI_API_BASE")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+# --- Models ---
+GEMINI_FALLBACK_MODEL = os.getenv('GEMINI_FALLBACK_MODEL') or 'gemini-1.5-flash'
 models = {
     'text-gpt-0040-render-sha-0': 'gpt-4',
     'text-gpt-0035-render-sha-0': 'gpt-3.5-turbo',
@@ -6,9 +18,19 @@ models = {
     'text-gpt-0040-render-sha-turbo': 'gpt-4-turbo',
     'text-gpt-4o-render-sha-0': 'gpt-4o',
 }
+PROXY_CONFIG = {
+    'enable': True, # Set to True if you use a config file
+    'http': None,
+    'https': None,
+    # 'http': 'http://your-proxy...',
+    # 'https': 'https://your-proxy...',
+}
 
 special_instructions = {
     'default': [],
+    'developer': [
+        {'role': 'system', 'content': 'You are a helpful developer assistant.'}
+    ],
     'gpt-dude-1.0': [
         {
             'role': 'user',
