@@ -1,7 +1,7 @@
 from server.model.db_model import get_db_cursor
 
     
-def get_team_skills_data() -> list[dict] | None:
+def get_team_skills_data():
     """
     Fetches all team skills from the database.
     
