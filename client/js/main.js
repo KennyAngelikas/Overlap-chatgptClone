@@ -50,11 +50,15 @@ async function handleSend() {
   }
   const teamId = localStorage.getItem("team_id") || null;
 
+  // Get custom API key from localStorage if available
+  const customApiKey = localStorage.getItem("custom_api_key");
+
   const payload = {
     conversation_id: convId,
     action: "_ask",
     model: document.getElementById("model")?.value || "default",
     jailbreak: document.getElementById("jailbreak")?.value || "false",
+    ...(customApiKey ? { api_key: customApiKey } : {}),
     meta: {
       id: message_id(),
       user: {
@@ -245,6 +249,75 @@ export async function init() {
       }
       // keep label as "Join team A"
     });
+  }
+
+  // Initialize API key settings
+  initApiKeySettings();
+}
+
+function initApiKeySettings() {
+  const settingsToggle = document.getElementById("settings-toggle-button");
+  const settingsContent = document.getElementById("settings-content");
+  const settingsChevron = document.getElementById("settings-chevron");
+  const apiKeyInput = document.getElementById("api-key-input");
+  const saveBtn = document.getElementById("save-api-key-button");
+  const clearBtn = document.getElementById("clear-api-key-button");
+  const statusDiv = document.getElementById("api-key-status");
+
+  // Load saved API key on page load (don't show status message on initial load)
+  const savedApiKey = localStorage.getItem("custom_api_key");
+  if (savedApiKey && apiKeyInput) {
+    apiKeyInput.value = savedApiKey;
+    // Add visual indicator that key is saved
+    apiKeyInput.style.borderColor = "var(--accent)";
+  }
+
+  // Toggle settings visibility
+  if (settingsToggle && settingsContent) {
+    settingsToggle.addEventListener("click", () => {
+      const isHidden = settingsContent.style.display === "none";
+      settingsContent.style.display = isHidden ? "block" : "none";
+      if (settingsChevron) {
+        settingsChevron.style.transform = isHidden ? "rotate(180deg)" : "rotate(0deg)";
+      }
+    });
+  }
+
+  // Save API key
+  if (saveBtn && apiKeyInput) {
+    saveBtn.addEventListener("click", () => {
+      const apiKey = apiKeyInput.value.trim();
+      if (apiKey) {
+        localStorage.setItem("custom_api_key", apiKey);
+        apiKeyInput.style.borderColor = "var(--accent)";
+        showStatus("API key saved successfully", "success");
+      } else {
+        apiKeyInput.style.borderColor = "";
+        showStatus("Please enter an API key", "error");
+      }
+    });
+  }
+
+  // Clear API key
+  if (clearBtn && apiKeyInput) {
+    clearBtn.addEventListener("click", () => {
+      apiKeyInput.value = "";
+      apiKeyInput.style.borderColor = "";
+      localStorage.removeItem("custom_api_key");
+      showStatus("API key cleared", "info");
+    });
+  }
+
+  function showStatus(message, type) {
+    if (!statusDiv) return;
+    statusDiv.textContent = message;
+    statusDiv.className = `api-key-status ${type}`;
+    setTimeout(() => {
+      if (statusDiv) {
+        statusDiv.textContent = "";
+        statusDiv.className = "api-key-status";
+      }
+    }, 3000);
   }
 }
 

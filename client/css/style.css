@@ -506,6 +506,142 @@ select {
   font-size: 14px;
 }
 
+.settings-section {
+  width: 100%;
+  margin: 10px 0;
+  border-top: 1px solid var(--blur-border);
+  padding-top: 10px;
+}
+
+.settings-toggle {
+  padding: 8px 12px;
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  background: transparent;
+  border: 1px solid var(--conversations);
+  border-radius: var(--border-radius-1);
+  width: 100%;
+  justify-content: space-between;
+}
+
+.settings-toggle span {
+  color: var(--colour-3);
+  font-size: 14px;
+  flex: 1;
+  text-align: left;
+}
+
+.settings-toggle i {
+  color: var(--colour-3);
+  transition: transform 0.3s ease;
+}
+
+.settings-toggle:hover {
+  border-color: var(--accent);
+}
+
+.settings-content {
+  margin-top: 10px;
+  padding: 12px;
+  background: var(--blur-bg);
+  border: 1px solid var(--blur-border);
+  border-radius: var(--border-radius-1);
+}
+
+.settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.settings-field label {
+  color: var(--colour-3);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.api-key-input {
+  padding: 8px 12px;
+  background: var(--blur-bg);
+  border: 1px solid var(--blur-border);
+  border-radius: var(--border-radius-1);
+  color: var(--colour-3);
+  font-size: 13px;
+  width: 100%;
+  font-family: monospace;
+}
+
+.api-key-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.api-key-input::placeholder {
+  color: var(--user-input);
+  opacity: 0.6;
+}
+
+.settings-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.save-api-key-btn,
+.clear-api-key-btn {
+  padding: 6px 12px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  background: transparent;
+  border: 1px solid var(--conversations);
+  border-radius: var(--border-radius-1);
+  flex: 1;
+  justify-content: center;
+}
+
+.save-api-key-btn span,
+.clear-api-key-btn span {
+  color: var(--colour-3);
+  font-size: 12px;
+}
+
+.save-api-key-btn:hover {
+  border-color: var(--accent);
+  background: rgba(139, 61, 255, 0.1);
+}
+
+.clear-api-key-btn:hover {
+  border-color: #ff3d3d;
+  background: rgba(255, 61, 61, 0.1);
+}
+
+.api-key-status {
+  font-size: 12px;
+  padding: 6px;
+  border-radius: var(--border-radius-1);
+  min-height: 20px;
+}
+
+.api-key-status.success {
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.1);
+}
+
+.api-key-status.error {
+  color: #ff3d3d;
+  background: rgba(255, 61, 61, 0.1);
+}
+
+.api-key-status.info {
+  color: var(--accent);
+  background: rgba(139, 61, 255, 0.1);
+}
+
 .conversations .top {
   display: flex;
   flex-direction: column;
