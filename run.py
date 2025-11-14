@@ -1,6 +1,9 @@
 from server.app     import app
 from server.website import Website
 from server.controller.conversation_controller import ConversationController
+import os
+from server.controller.teams_memory_controller import TeamsMemoryController
+from server.controller.teams_db_controller import TeamsDBController
 from json import load
 
 # --- VERCEL FIX: MOVED ROUTE LOGIC OUTSIDE __main__ ---
@@ -18,6 +21,11 @@ for route in site.routes:
     )
 
 ConversationController(app)
+# Prefer DB-backed teams controller when DB environment is present
+if os.environ.get('DB_HOST') or os.environ.get('DATABASE_URL'):
+    TeamsDBController(app)
+else:
+    TeamsMemoryController(app)
 
 # We also need to add the root route you were missing
 @app.route('/', methods=['GET'])
