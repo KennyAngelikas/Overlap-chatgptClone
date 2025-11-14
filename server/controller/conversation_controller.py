@@ -28,6 +28,9 @@ class ConversationController:
             prompt = json_data['meta']['content']['parts'][0]
             model = json_data.get( 'gemini-1.5-flash')
             gen_config = json_data.get('generationConfig', {})
+            
+            # Use custom API key if provided, otherwise use default
+            api_key = json_data.get('api_key') or self.gemini_key
 
             # 2. Build System Prompt (using our service)
             system_message = prompt_service.build_system_prompt()
@@ -54,12 +57,12 @@ class ConversationController:
             # print("Prepared Payload Body:", dumps(payload_body, indent=2))  # Debug print
             # print("Using Proxy Config:", dumps(self.proxy_config, indent=2))  # Debug print
             # print("Using Model:", model)  # Debug print
-            # print("Using Gemini Key:", self.gemini_key is not None)  # Debug print
+            # print("Using Gemini Key:", api_key is not None)  # Debug print
             # 6. Get the streaming response (using our service)
             gpt_resp = gemini_service.stream_gemini_response(
                 'gemini-2.5-flash', 
                 payload_body, 
-                self.gemini_key, 
+                api_key, 
                 self.proxy_config
             )
 

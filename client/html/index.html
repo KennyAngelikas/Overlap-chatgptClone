@@ -106,6 +106,35 @@
           <div id="conversation-list" class="conversation-list"></div>
           <div class="spinner"></div>
         </div>
+        <div class="settings-section">
+          <button id="settings-toggle-button" class="settings-toggle">
+            <i class="fa-regular fa-gear"></i>
+            <span>Settings</span>
+            <i class="fa-regular fa-chevron-down" id="settings-chevron"></i>
+          </button>
+          <div id="settings-content" class="settings-content" style="display: none;">
+            <div class="settings-field">
+              <label for="api-key-input">API Key (Optional)</label>
+              <input 
+                type="password" 
+                id="api-key-input" 
+                placeholder="Enter your Gemini API key"
+                class="api-key-input"
+              />
+              <div class="settings-actions">
+                <button id="save-api-key-button" class="save-api-key-btn">
+                  <i class="fa-regular fa-save"></i>
+                  <span>Save</span>
+                </button>
+                <button id="clear-api-key-button" class="clear-api-key-btn">
+                  <i class="fa-regular fa-trash"></i>
+                  <span>Clear</span>
+                </button>
+              </div>
+              <div id="api-key-status" class="api-key-status"></div>
+            </div>
+          </div>
+        </div>
         <div class="bottom_buttons">
           <button id="join-team-button" type="button">
             <span>Join team A</span>

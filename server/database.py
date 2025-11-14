@@ -26,13 +26,13 @@ class ModelConfig:
 
 
     #Retrieves fallback model name from environment or uses default
-    @static method
+    @staticmethod
     def get_fallback_model() -> str:
-        return os.get env('GEMINI_FALLBACK_MODEL') or ModelConfig.DEFAULT_GEMINI_MODEL
+        return os.getenv('GEMINI_FALLBACK_MODEL') or ModelConfig.DEFAULT_GEMINI_MODEL
 
 
     #Constructs the Gemini API streaming endpoint URL for the given model
-    @static method
+    @staticmethod
     def build_gemini_url(model: str) -> str:
         return (
             f"{ModelConfig.GEMINI_API_BASE_URL}/models/{model}:"
@@ -40,7 +40,7 @@ class ModelConfig:
         )
 
     #Prepares the request body for the Gemini API call with proper formatting
-    @static method
+    @staticmethod
     def prepare_gemini_request_body(
         contents: list,
         system_instruction: str,
@@ -59,9 +59,9 @@ class ModelConfig:
         return body
 
     #Validates that a model name is non-empty and properly formatted
-    @static method
+    @staticmethod
     def validate_model_name(model: str) -> bool:
-        if not model or not is instance(model, str):
+        if not model or not isinstance(model, str):
             return False
 
         model_trimmed = model.strip()
