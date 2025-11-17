@@ -1,34 +1,25 @@
-# Overlap
-- Overlap is a team-first chat assistant that nudges teammates toward each other.  
-- When someone asks a question, the system checks a shared, opt‑in skills index and, if relevant, suggests which teammate(s) might help — replacing solitary AI answers with socially aware guidance.
-
-## MVP (minimal viable product)
-- Simple web chat UI (single‑page) that sends {user_id, team_id, prompt} to the server.  
-- Team and user records with a short skills survey (store in SQLite for MVP).  
-- Backend augmentation: before calling the model, do a fast skill-match (keyword or simple normalization) and inject one short hint into the prompt if a teammate matches.  
-- Stream model responses back to the client unchanged except for the injected hint.  
-- Basic seed data, Docker support, and environment variable for the model API key.  
-- No production auth in MVP (trusted user_id); plan to add auth before public use.
-
-## User journey (MVP)
-1. Join or create a team and complete a quick skills survey.  
-2. Open chat and ask a question.  
-3. Server checks team skills and finds possible matches.  
-4. If a match exists, the reply includes a short suggestion like “Alice knows React — want to connect?”  
-5. Conversation is logged; skill usage counters may be updated for future recommendations.
-
-## User personas
-#Four User Personnas:
-
-Sam — Product Manager
-Goal: Get a quick, team-aware answer or a referral to the right teammate.
-Scenario: Asks “How do we track onboarding metrics?” and is suggested to talk to Maya, who owns analytics.
-
- 
-# ChatGPT Clone
-feel free to improve the code / suggest improvements
-
+# Project Overlap 
+UPDATE THIS IMAGE WITH AN EXAMPLE IMAGE 
 <img width="1470" alt="image" src="https://user-images.githubusercontent.com/98614666/232768610-fdeada85-3d21-4cf9-915e-a0ec9f3b7a9f.png">
+
+## Overview
+### Project Abstract
+Overlap is a collaborative chatbot ecosystem designed to enhance peer-to-peer knowledge sharing within a team. Instead of acting as a generic Q&A assistant, the system connects teammates to one another based on overlapping interests, recent learning activity, or self-declared expertise.
+
+Each team member has a personal chatbot (e.g., in Slack). When a user asks their bot for help — for example, “Teach me React basics.” — the bot consults a shared, opt-in knowledge index to identify peers who either know or recently asked about React. If a match is found, the bot responds: “Bob has ‘React’ expertise, and Alice asked about React two days ago. Want to connect with them?” 
+
+This replaces solitary AI help with socially intelligent nudges that build team relationships while maintaining individual privacy. Later phases will visualize shared learning across the team through a mind-map view, showing connections between topics and people (opt-in only).
+
+### Novelty
+Why is this novel? Recent work shows that AI is eroding the social fabric inside and outside the classroom. Students are going to TAs, peers, and instructors at the lowest rates ever. That’s a problem because peer support is tightly linked to students’ wellbeing—and without it, students feel more isolated than ever.
+
+_**Our AI directly confronts this. Instead of replacing relationships, it is designed to build them.**_
+
+A second piece of novelty is how we handle “expertise finding.” Academic teams struggle to know who to go to for help. Our AI reduces that cognitive load by matching the questions students ask with the knowledge and experience already present in their community, connecting them to the right expert and strengthening human relationships along the way.
+
+
+# Testing 
+feel free to improve the code / suggest improvements
 
 ## Client + Testing
 To test our application, please go here --> https://overlap-chatgpt-clone-oah03fquq-manvender-singhs-projects.vercel.app/chat/
