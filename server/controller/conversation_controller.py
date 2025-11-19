@@ -51,10 +51,10 @@ class ConversationController:
                 system_message,
                 gen_config
             )
-            print("Prepared Payload Body:", dumps(payload_body, indent=2))  # Debug print
-            print("Using Proxy Config:", dumps(self.proxy_config, indent=2))  # Debug print
-            print("Using Model:", model)  # Debug print
-            print("Using Gemini Key:", self.gemini_key is not None)  # Debug print
+            # print("Prepared Payload Body:", dumps(payload_body, indent=2))  # Debug print
+            # print("Using Proxy Config:", dumps(self.proxy_config, indent=2))  # Debug print
+            # print("Using Model:", model)  # Debug print
+            # print("Using Gemini Key:", self.gemini_key is not None)  # Debug print
             # 6. Get the streaming response (using our service)
             gpt_resp = gemini_service.stream_gemini_response(
                 'gemini-2.5-flash', 
