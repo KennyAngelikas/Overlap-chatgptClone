@@ -3,6 +3,15 @@ from typing import List, Dict, Any, Optional
 from psycopg2.extras import Json
 from server.model.db_model import get_db_cursor
 
+    
+def get_team_skills_data():
+    """
+    Fetches all team skills from the database.
+    
+    Returns:
+        A list of dictionaries (rows) on success, or None on failure.
+    """
+    print("Attempting to fetch team skills data...")
 
 def ensure_team_table():
     """Create the team_skills table if it does not exist."""
