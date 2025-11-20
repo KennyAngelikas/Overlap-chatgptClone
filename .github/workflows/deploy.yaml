@@ -1,0 +1,56 @@
+name: Docker Build & Deploy to Vercel
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      # Step A: Pull Vercel Config
+      # We do this OUTSIDE Docker first so we have the valid .vercel folder
+      # to copy INTO the Docker container.
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      # Step B: Build the Docker Image
+      # Automates: docker build --build-arg VERCEL_TOKEN=... -t overlap-chatgpt .
+      - name: Build Docker Image
+        run: |
+          docker build \
+            --build-arg VERCEL_TOKEN=${{ secrets.VERCEL_TOKEN }} \
+            -t overlap-chatgpt .
+
+      # Step C: Extract Artifacts
+      # Automates: docker create, docker cp, docker rm
+      - name: Extract Prebuilt Artifacts
+        run: |
+          # Create a temporary container (don't run it, just create it)
+          docker create --name temp_container overlap-chatgpt
+          
+          # Copy the .vercel output folder from the container to the runner
+          # Note: We overwrite the local .vercel folder with the build output
+          docker cp temp_container:/.vercel .
+          
+          # Cleanup
+          docker rm temp_container
+
+      # Step D: Deploy to Vercel
+      # Automates: vercel deploy --prebuilt --prod
+      - name: Deploy to Vercel
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
