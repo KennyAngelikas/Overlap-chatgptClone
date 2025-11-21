@@ -9,16 +9,39 @@ import {
   scrollToBottom,
   renderConversationList,
 } from "./ui.js";
+import {
+  fetchTeamsList,
+  createTeamRecord,
+  joinTeamRecord,
+  getSelectedTeamId,
+  setSelectedTeamId,
+} from "./teams.js";
 import { message_id, uuid, resizeTextarea } from "./utils.js";
 
 let currentAbort = null;
 let closeSidebarRef = null;
 let appInitialized = false;
+let teamStatusTimeout = null;
+let teamsCache = [];
 
 const MOCK_MODE =
   typeof location !== "undefined" &&
   location.hash &&
   location.hash.includes("local");
+
+function ensureUserIdentity() {
+  let userId = localStorage.getItem("user_id");
+  if (!userId) {
+    userId = `user_${uuid().slice(0, 8)}`;
+    localStorage.setItem("user_id", userId);
+  }
+  let userEmail = localStorage.getItem("user_email");
+  if (!userEmail) {
+    userEmail = `${userId}@overlap.local`;
+    localStorage.setItem("user_email", userEmail);
+  }
+  return { userId, userEmail };
+}
 
 function showStopGenerating(show) {
   const stopEl = document.getElementById("stop-generating");
@@ -66,6 +89,227 @@ function closeSidebarIfMobile() {
   }
 }
 
+function showTeamStatus(message, type = "info") {
+  const status = document.getElementById("team-status");
+  if (!status) return;
+  status.textContent = message || "";
+  status.className = `team-status ${type}`;
+  if (teamStatusTimeout) clearTimeout(teamStatusTimeout);
+  if (message) {
+    teamStatusTimeout = setTimeout(() => {
+      status.textContent = "";
+      status.className = "team-status";
+    }, 3500);
+  }
+}
+
+function updateJoinButtonLabel(forceJoined = false) {
+  const joinBtn = document.getElementById("join-team-button");
+  if (!joinBtn) return;
+  const selectedId = getSelectedTeamId();
+  const selectedTeam = teamsCache.find((t) => `${t.id}` === `${selectedId}`);
+  const labelNode = joinBtn.querySelector("span") || joinBtn;
+  const isJoined = forceJoined || `${localStorage.getItem("team_id") || ""}` === `${selectedId}`;
+  if (!selectedId) {
+    joinBtn.disabled = true;
+    labelNode.textContent = "Select a team";
+    joinBtn.classList.remove("joined");
+    return;
+  }
+  joinBtn.disabled = false;
+  labelNode.textContent = isJoined
+    ? "Joined"
+    : `Join ${selectedTeam?.name || "team"}`;
+  joinBtn.classList.toggle("joined", isJoined);
+}
+
+function renderTeamsList(list) {
+  const container =
+    document.getElementById("team-list") ||
+    document.getElementById("teams-placeholder");
+  if (!container) return;
+  const selectedId = getSelectedTeamId();
+  container.innerHTML = "";
+  if (!list || !list.length) {
+    const empty = document.createElement("div");
+    empty.className = "no-teams";
+    empty.textContent = "No teams yet. Create one to get started.";
+    container.appendChild(empty);
+    updateJoinButtonLabel();
+    return;
+  }
+  list.forEach((team) => {
+    const isSelected = `${team.id}` === `${selectedId}`;
+    const item = document.createElement("div");
+    item.className = "team-card";
+    if (isSelected) item.classList.add("active");
+
+    const info = document.createElement("div");
+    info.className = "team-info";
+    const nameEl = document.createElement("div");
+    nameEl.className = "team-name";
+    nameEl.textContent = team.name || team.team_name || `Team ${team.id}`;
+    const meta = document.createElement("div");
+    meta.className = "team-meta";
+    meta.textContent = team.member_limit
+      ? `${team.member_limit} member${team.member_limit === 1 ? "" : "s"}`
+      : "Flexible size";
+    info.appendChild(nameEl);
+    info.appendChild(meta);
+
+    const selectBtn = document.createElement("button");
+    selectBtn.className = "team-select-btn";
+    selectBtn.textContent = isSelected ? "Selected" : "Select";
+    selectBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      setSelectedTeamId(team.id);
+      renderTeamsList(list);
+      updateJoinButtonLabel();
+    });
+
+    item.addEventListener("click", () => {
+      setSelectedTeamId(team.id);
+      renderTeamsList(list);
+      updateJoinButtonLabel();
+    });
+
+    item.appendChild(info);
+    item.appendChild(selectBtn);
+    container.appendChild(item);
+  });
+  updateJoinButtonLabel();
+}
+
+async function refreshTeams() {
+  try {
+    teamsCache = await fetchTeamsList();
+    teamsCache.sort((a, b) => {
+      const aNum = Number(a.id);
+      const bNum = Number(b.id);
+      if (!Number.isNaN(aNum) && !Number.isNaN(bNum)) return aNum - bNum;
+      return `${a.id}`.localeCompare(`${b.id}`);
+    });
+  } catch (err) {
+    teamsCache = [];
+  }
+  renderTeamsList(teamsCache);
+}
+
+function openCreateTeamModal() {
+  const modal = document.getElementById("team-modal");
+  const nameInput = document.getElementById("team-modal-name");
+  if (!modal) return;
+  modal.classList.add("active");
+  if (nameInput) {
+    nameInput.value = "";
+    nameInput.focus();
+  }
+  const sizeInput = document.getElementById("team-modal-size");
+  if (sizeInput) sizeInput.value = "";
+  const err = document.getElementById("team-modal-error");
+  if (err) err.textContent = "";
+}
+
+function closeCreateTeamModal(resetFields = false) {
+  const modal = document.getElementById("team-modal");
+  if (!modal) return;
+  modal.classList.remove("active");
+  if (resetFields) {
+    const err = document.getElementById("team-modal-error");
+    const nameInput = document.getElementById("team-modal-name");
+    const sizeInput = document.getElementById("team-modal-size");
+    if (err) err.textContent = "";
+    if (nameInput) nameInput.value = "";
+    if (sizeInput) sizeInput.value = "";
+  }
+}
+
+async function handleCreateTeamSubmit() {
+  const nameInput = document.getElementById("team-modal-name");
+  const sizeInput = document.getElementById("team-modal-size");
+  const errorEl = document.getElementById("team-modal-error");
+  const confirmBtn = document.getElementById("team-modal-confirm");
+  const name = nameInput?.value?.trim();
+  const rawLimit = sizeInput?.value?.trim();
+  const memberLimit = rawLimit ? parseInt(rawLimit, 10) : null;
+
+  if (!name) {
+    if (errorEl) errorEl.textContent = "Please enter a team name.";
+    return;
+  }
+  if (rawLimit && (!Number.isInteger(memberLimit) || memberLimit < 1)) {
+    if (errorEl) errorEl.textContent = "Member count must be a positive number.";
+    return;
+  }
+
+  if (errorEl) errorEl.textContent = "";
+  if (confirmBtn) {
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = "Creating...";
+  }
+
+  try {
+    const result = await createTeamRecord(name, memberLimit);
+    if (!result.success || !result.team) {
+      throw new Error(result.error || "Unable to create team.");
+    }
+    setSelectedTeamId(result.team.id);
+    await refreshTeams();
+    showTeamStatus(`Created ${result.team.name}`, "success");
+    closeCreateTeamModal(true);
+  } catch (err) {
+    if (errorEl) errorEl.textContent = err.message || "Unable to create team.";
+  } finally {
+    if (confirmBtn) {
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = "Create team";
+    }
+  }
+}
+
+async function handleJoinSelectedTeam() {
+  const selectedId = getSelectedTeamId();
+  const joinBtn = document.getElementById("join-team-button");
+  if (!selectedId) {
+    showTeamStatus("Select a team to join", "error");
+    return;
+  }
+  const { userId, userEmail } = ensureUserIdentity();
+  const selectedTeam = teamsCache.find((t) => `${t.id}` === `${selectedId}`);
+  if (joinBtn) joinBtn.disabled = true;
+  showTeamStatus("Joining team...", "info");
+  try {
+    const result = await joinTeamRecord(selectedId, userId, userEmail);
+    if (!result.success) throw new Error(result.error || "Unable to join team.");
+    localStorage.setItem("team_id", selectedId);
+    showTeamStatus(
+      `You have joined ${selectedTeam?.name || "this team"}`,
+      "success"
+    );
+    updateJoinButtonLabel(true);
+  } catch (err) {
+    showTeamStatus(err.message || "Could not join team.", "error");
+  } finally {
+    if (joinBtn) joinBtn.disabled = false;
+  }
+}
+
+function initTeamsPanel() {
+  const createBtn = document.getElementById("create-team-button");
+  const joinBtn = document.getElementById("join-team-button");
+  const cancelBtn = document.getElementById("team-modal-cancel");
+  const confirmBtn = document.getElementById("team-modal-confirm");
+  const overlay = document.getElementById("team-modal-overlay");
+
+  if (createBtn) createBtn.addEventListener("click", openCreateTeamModal);
+  if (joinBtn) joinBtn.addEventListener("click", handleJoinSelectedTeam);
+  if (cancelBtn) cancelBtn.addEventListener("click", () => closeCreateTeamModal(true));
+  if (overlay) overlay.addEventListener("click", () => closeCreateTeamModal(true));
+  if (confirmBtn) confirmBtn.addEventListener("click", handleCreateTeamSubmit);
+
+  refreshTeams();
+}
+
 async function handleSend() {
   const inputEl = document.getElementById("message-input");
   if (!inputEl) return;
@@ -91,11 +335,7 @@ async function handleSend() {
 
   const customApiKey = localStorage.getItem("custom_api_key");
 
-  let userId = localStorage.getItem("user_id");
-  if (!userId) {
-    userId = `user_${uuid().slice(0, 8)}`;
-    localStorage.setItem("user_id", userId);
-  }
+  const { userId } = ensureUserIdentity();
   const teamId = localStorage.getItem("team_id") || null;
 
   const payload = {
@@ -284,19 +524,7 @@ async function init() {
     });
   }
 
-  const joinBtn = document.getElementById("join-team-button");
-  if (joinBtn) {
-    joinBtn.innerHTML = "<span>Join team A</span>";
-    joinBtn.addEventListener("click", () => {
-      let teamId = localStorage.getItem("team_id");
-      if (!teamId) {
-        const raw = uuid();
-        teamId = `team_${raw.slice(0, 8)}`;
-        localStorage.setItem("team_id", teamId);
-      }
-    });
-  }
-
+  initTeamsPanel();
   initMobileSidebar();
   initStopGeneratingButton();
   initApiKeySettings();

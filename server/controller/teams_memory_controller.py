@@ -23,11 +23,20 @@ class TeamsMemoryController:
         try:
             data = request.json or {}
             name = data.get('team_name')
+            raw_limit = data.get('member_limit')
+            member_limit = None
+            if raw_limit is not None:
+                try:
+                    member_limit = int(raw_limit)
+                    if member_limit < 1:
+                        raise ValueError()
+                except Exception:
+                    return {'success': False, 'error': 'member_limit must be a positive integer'}, 400
             if not name:
                 return {'success': False, 'error': 'team_name required'}, 400
             tid = _next_id()
-            TEAMS[tid] = { 'id': tid, 'name': name, 'members': {} }
-            return {'success': True, 'team_id': tid}, 201
+            TEAMS[tid] = { 'id': tid, 'name': name, 'members': {}, 'member_limit': member_limit }
+            return {'success': True, 'team_id': tid, 'team_name': name, 'member_limit': member_limit}, 201
         except Exception as e:
             return {'success': False, 'error': str(e)}, 500
 
