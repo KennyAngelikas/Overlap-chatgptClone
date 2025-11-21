@@ -66,7 +66,6 @@ function showChat() {
     mainApp.style.display = "flex";
     mainApp.classList.add("visible");
   }
-  localStorage.setItem("overlap_seen_landing", "true");
   startApp();
 }
 
@@ -101,6 +100,58 @@ function showTeamStatus(message, type = "info") {
       status.className = "team-status";
     }, 3500);
   }
+}
+
+function updateActiveTeamChip() {
+  const nameEl = document.getElementById("active-team-name");
+  const metaEl = document.getElementById("team-meta");
+  const selectedId = getSelectedTeamId();
+  const selectedTeam = teamsCache.find((t) => `${t.id}` === `${selectedId}`);
+  const label = selectedTeam?.name || "Personal space";
+  if (nameEl) nameEl.textContent = label;
+  if (metaEl) {
+    if (selectedTeam) {
+      const size =
+        selectedTeam.member_limit && Number(selectedTeam.member_limit) > 0
+          ? `${selectedTeam.member_limit} seats`
+          : "Unlimited seats";
+      metaEl.textContent = `${label} · ${size}`;
+    } else {
+      metaEl.textContent = "Solo workspace";
+    }
+  }
+}
+
+function renderTeamSelect(list) {
+  const select = document.getElementById("team-select");
+  if (!select) return;
+  const selectedId = getSelectedTeamId();
+  select.innerHTML = "";
+
+  const personal = document.createElement("option");
+  personal.value = "";
+  personal.textContent = "Personal space";
+  select.appendChild(personal);
+
+  if (list && list.length) {
+    list.forEach((team) => {
+      const opt = document.createElement("option");
+      opt.value = `${team.id}`;
+      opt.textContent = team.name || `Team ${team.id}`;
+      select.appendChild(opt);
+    });
+  }
+
+  select.value = selectedId != null ? `${selectedId}` : "";
+  select.onchange = (e) => {
+    const value = e.target.value;
+    setSelectedTeamId(value || null);
+    updateJoinButtonLabel();
+    updateActiveTeamChip();
+    renderTeamsList(list || teamsCache);
+  };
+
+  updateActiveTeamChip();
 }
 
 function updateJoinButtonLabel(forceJoined = false) {
@@ -193,6 +244,8 @@ async function refreshTeams() {
     teamsCache = [];
   }
   renderTeamsList(teamsCache);
+  renderTeamSelect(teamsCache);
+  updateActiveTeamChip();
 }
 
 function openCreateTeamModal() {
@@ -267,6 +320,49 @@ async function handleCreateTeamSubmit() {
   }
 }
 
+async function handleCreateTeamInline() {
+  const nameInput = document.getElementById("settings-team-name");
+  const sizeInput = document.getElementById("settings-team-size");
+  const statusEl = document.getElementById("settings-create-error");
+  const createBtn = document.getElementById("settings-create-team");
+
+  const name = nameInput?.value?.trim();
+  const rawLimit = sizeInput?.value?.trim();
+  const memberLimit = rawLimit ? parseInt(rawLimit, 10) : null;
+
+  if (!name) {
+    if (statusEl) statusEl.textContent = "Give your team a name.";
+    return;
+  }
+  if (rawLimit && (!Number.isInteger(memberLimit) || memberLimit < 1)) {
+    if (statusEl) statusEl.textContent = "Member count must be a positive number.";
+    return;
+  }
+
+  if (statusEl) statusEl.textContent = "";
+  if (createBtn) {
+    createBtn.disabled = true;
+    createBtn.textContent = "Creating...";
+  }
+
+  try {
+    const result = await createTeamRecord(name, memberLimit);
+    if (!result.success || !result.team) throw new Error(result.error || "Unable to create team.");
+    setSelectedTeamId(result.team.id);
+    if (nameInput) nameInput.value = "";
+    if (sizeInput) sizeInput.value = "";
+    await refreshTeams();
+    showTeamStatus(`Created ${result.team.name}`, "success");
+  } catch (err) {
+    if (statusEl) statusEl.textContent = err.message || "Unable to create team.";
+  } finally {
+    if (createBtn) {
+      createBtn.disabled = false;
+      createBtn.textContent = "Create team";
+    }
+  }
+}
+
 async function handleJoinSelectedTeam() {
   const selectedId = getSelectedTeamId();
   const joinBtn = document.getElementById("join-team-button");
@@ -287,6 +383,7 @@ async function handleJoinSelectedTeam() {
       "success"
     );
     updateJoinButtonLabel(true);
+    updateActiveTeamChip();
   } catch (err) {
     showTeamStatus(err.message || "Could not join team.", "error");
   } finally {
@@ -296,16 +393,20 @@ async function handleJoinSelectedTeam() {
 
 function initTeamsPanel() {
   const createBtn = document.getElementById("create-team-button");
+  const inlineCreateBtn = document.getElementById("settings-create-team");
   const joinBtn = document.getElementById("join-team-button");
   const cancelBtn = document.getElementById("team-modal-cancel");
   const confirmBtn = document.getElementById("team-modal-confirm");
   const overlay = document.getElementById("team-modal-overlay");
+  const refreshBtn = document.getElementById("refresh-teams-button");
 
   if (createBtn) createBtn.addEventListener("click", openCreateTeamModal);
+  if (inlineCreateBtn) inlineCreateBtn.addEventListener("click", handleCreateTeamInline);
   if (joinBtn) joinBtn.addEventListener("click", handleJoinSelectedTeam);
   if (cancelBtn) cancelBtn.addEventListener("click", () => closeCreateTeamModal(true));
   if (overlay) overlay.addEventListener("click", () => closeCreateTeamModal(true));
   if (confirmBtn) confirmBtn.addEventListener("click", handleCreateTeamSubmit);
+  if (refreshBtn) refreshBtn.addEventListener("click", refreshTeams);
 
   refreshTeams();
 }
@@ -350,13 +451,14 @@ async function handleSend() {
         user_id: userId,
         ...(teamId ? { team_id: teamId } : {}),
       },
-      content: {
-        conversation: (await store.getConversation(convId)).messages,
-        internet_access: document.getElementById("switch")?.checked || false,
-        content_type: "text",
-        parts: [{ content: text, role: "user" }],
+        content: {
+          conversation: (await store.getConversation(convId)).messages,
+          internet_access:
+            document.getElementById("toggle-internet")?.checked || false,
+          content_type: "text",
+          parts: [{ content: text, role: "user" }],
+        },
       },
-    },
   };
 
   showStopGenerating(true);
@@ -528,6 +630,8 @@ async function init() {
   initMobileSidebar();
   initStopGeneratingButton();
   initApiKeySettings();
+  initSettingsDrawer();
+  applyCompactMode();
   initLogoNavigation();
 }
 
@@ -565,30 +669,15 @@ function initStopGeneratingButton() {
 }
 
 function initApiKeySettings() {
-  const settingsToggle = document.getElementById("settings-toggle-button");
-  const settingsContent = document.getElementById("settings-content");
-  const settingsChevron = document.getElementById("settings-chevron");
   const apiKeyInput = document.getElementById("api-key-input");
   const saveBtn = document.getElementById("save-api-key-button");
   const clearBtn = document.getElementById("clear-api-key-button");
   const statusDiv = document.getElementById("api-key-status");
-  const panel = document.getElementById("settings-panel");
 
   const savedApiKey = localStorage.getItem("custom_api_key");
   if (savedApiKey && apiKeyInput) {
     apiKeyInput.value = savedApiKey;
-    apiKeyInput.style.borderColor = "var(--primary)";
-    panel?.classList.add("has-key");
-  }
-
-  if (settingsToggle && settingsContent) {
-    settingsToggle.addEventListener("click", () => {
-      const isHidden = settingsContent.style.display === "none";
-      settingsContent.style.display = isHidden ? "block" : "none";
-      if (settingsChevron) {
-        settingsChevron.style.transform = isHidden ? "rotate(180deg)" : "rotate(0deg)";
-      }
-    });
+    apiKeyInput.style.borderColor = "var(--accent-start)";
   }
 
   if (saveBtn && apiKeyInput) {
@@ -596,12 +685,10 @@ function initApiKeySettings() {
       const apiKey = apiKeyInput.value.trim();
       if (apiKey) {
         localStorage.setItem("custom_api_key", apiKey);
-        apiKeyInput.style.borderColor = "var(--primary)";
-        panel?.classList.add("has-key");
+        apiKeyInput.style.borderColor = "var(--accent-start)";
         showApiKeyStatus(statusDiv, "API key saved successfully", "success");
       } else {
         apiKeyInput.style.borderColor = "";
-        panel?.classList.remove("has-key");
         showApiKeyStatus(statusDiv, "Please enter an API key", "error");
       }
     });
@@ -611,11 +698,69 @@ function initApiKeySettings() {
     clearBtn.addEventListener("click", () => {
       apiKeyInput.value = "";
       apiKeyInput.style.borderColor = "";
-      panel?.classList.remove("has-key");
       localStorage.removeItem("custom_api_key");
       showApiKeyStatus(statusDiv, "API key cleared", "success");
     });
   }
+}
+
+function initSettingsDrawer() {
+  const drawer = document.getElementById("settings-drawer");
+  const backdrop = document.getElementById("settings-backdrop");
+  const openBtn = document.getElementById("open-settings");
+  const closeBtn = document.getElementById("close-settings");
+  const tabs = Array.from(document.querySelectorAll(".settings-tab"));
+  const sections = Array.from(document.querySelectorAll(".settings-section"));
+  const internetToggle = document.getElementById("toggle-internet");
+  const compactToggle = document.getElementById("toggle-compact");
+  const teamChip = document.getElementById("team-chip");
+
+  const savedInternet = localStorage.getItem("overlap_internet_enabled");
+  if (internetToggle) {
+    internetToggle.checked = savedInternet === "true";
+    internetToggle.addEventListener("change", () => {
+      localStorage.setItem("overlap_internet_enabled", internetToggle.checked ? "true" : "false");
+    });
+  }
+
+  const savedCompact = localStorage.getItem("overlap_compact_mode") === "true";
+  if (compactToggle) {
+    compactToggle.checked = savedCompact;
+    compactToggle.addEventListener("change", () => {
+      localStorage.setItem("overlap_compact_mode", compactToggle.checked ? "true" : "false");
+      applyCompactMode();
+    });
+  }
+
+  function setTab(tab) {
+    tabs.forEach((t) => t.classList.toggle("active", t.dataset.tab === tab));
+    sections.forEach((section) =>
+      section.classList.toggle("active", section.dataset.panel === tab)
+    );
+  }
+
+  function open(tab = "general") {
+    if (!drawer) return;
+    drawer.classList.add("open");
+    setTab(tab);
+  }
+
+  function close() {
+    drawer?.classList.remove("open");
+  }
+
+  if (openBtn) openBtn.addEventListener("click", () => open());
+  if (teamChip) teamChip.addEventListener("click", () => open("teams"));
+  if (closeBtn) closeBtn.addEventListener("click", close);
+  if (backdrop) backdrop.addEventListener("click", close);
+  tabs.forEach((tabBtn) =>
+    tabBtn.addEventListener("click", () => open(tabBtn.dataset.tab || "general"))
+  );
+}
+
+function applyCompactMode() {
+  const compact = localStorage.getItem("overlap_compact_mode") === "true";
+  document.body.classList.toggle("compact-mode", compact);
 }
 
 function showApiKeyStatus(node, message, type) {
@@ -656,15 +801,7 @@ function initLogoNavigation() {
 }
 
 function initLandingPage() {
-  const landing = document.getElementById("landing-page");
-  const mainApp = document.getElementById("main-app");
   const startBtn = document.getElementById("start-chatting-btn");
-  const hasVisited = localStorage.getItem("overlap_seen_landing");
-
-  if (hasVisited) {
-    showChat();
-    return;
-  }
 
   if (startBtn) {
     startBtn.addEventListener("click", showChat);
