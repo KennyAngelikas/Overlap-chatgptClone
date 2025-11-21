@@ -100,6 +100,26 @@
           <div id="conversation-list" class="conversation-list"></div>
           <div class="spinner"></div>
         </div>
+        <div class="sidebar-section teams-section">
+          <div class="section-header">
+            <div class="section-title">
+              <i class="fa-regular fa-users"></i>
+              <span>Teams</span>
+            </div>
+            <button id="create-team-button" class="chip-button">
+              <i class="fa-regular fa-plus"></i>
+              <span>Create</span>
+            </button>
+          </div>
+          <div id="team-list" class="team-list"></div>
+          <div class="team-actions">
+            <button id="join-team-button" class="sidebar-action-btn success">
+              <i class="fa-regular fa-check"></i>
+              <span>Join selected</span>
+            </button>
+            <div id="team-status" class="team-status"></div>
+          </div>
+        </div>
         <div class="sidebar-section settings-section">
           <div class="settings-panel" id="settings-panel">
             <button class="settings-toggle" id="settings-toggle-button">
@@ -129,10 +149,6 @@
           </div>
         </div>
         <div class="sidebar-footer">
-          <button id="join-team-button" class="sidebar-action-btn">
-            <i class="fa-regular fa-users"></i>
-            <span>Join Team A</span>
-          </button>
           <button id="clear-conversations-button" class="sidebar-action-btn destructive">
             <i class="fa-regular fa-trash"></i>
             <span>Clear Conversations</span>
@@ -179,6 +195,27 @@
           </div>
         </div>
       </main>
+    </div>
+
+    <div id="team-modal" class="team-modal">
+      <div class="team-modal-overlay" id="team-modal-overlay"></div>
+      <div class="team-modal-panel">
+        <div class="team-modal-header">
+          <h3>Create a team</h3>
+          <p>Spin up a new space for your class, project, or club.</p>
+        </div>
+        <div class="team-modal-body">
+          <label for="team-modal-name">Team name</label>
+          <input type="text" id="team-modal-name" placeholder="e.g. Robotics Club" />
+          <label for="team-modal-size">Number of members</label>
+          <input type="number" id="team-modal-size" min="1" inputmode="numeric" placeholder="5" />
+          <div id="team-modal-error" class="team-modal-error"></div>
+        </div>
+        <div class="team-modal-actions">
+          <button id="team-modal-cancel" class="ghost-btn">Cancel</button>
+          <button id="team-modal-confirm" class="primary-btn">Create team</button>
+        </div>
+      </div>
     </div>
   </body>
 </html>
