@@ -1,5 +1,3 @@
-// Minimal entrypoint (ES module) — wires UI to api/store/ui/utils modules.
-
 import { streamConversation } from "./api.js";
 import * as store from "./store.js";
 import {
@@ -14,13 +12,59 @@ import {
 import { message_id, uuid, resizeTextarea } from "./utils.js";
 
 let currentAbort = null;
+let closeSidebarRef = null;
+let appInitialized = false;
 
-// Enable a client-side mock mode for testing the UI without a backend/API key.
-// Activate by visiting the app URL with `#local` (e.g. http://localhost:1338/chat/#local)
 const MOCK_MODE =
   typeof location !== "undefined" &&
   location.hash &&
   location.hash.includes("local");
+
+function showStopGenerating(show) {
+  const stopEl = document.getElementById("stop-generating");
+  if (stopEl) stopEl.style.display = show ? "block" : "none";
+}
+
+function showLanding() {
+  const landing = document.getElementById("landing-page");
+  const mainApp = document.getElementById("main-app");
+  if (landing) {
+    landing.style.display = "flex";
+    landing.classList.remove("hidden");
+  }
+  if (mainApp) mainApp.style.display = "none";
+}
+
+function showChat() {
+  const landing = document.getElementById("landing-page");
+  const mainApp = document.getElementById("main-app");
+  if (landing) landing.style.display = "none";
+  if (mainApp) {
+    mainApp.style.display = "flex";
+    mainApp.classList.add("visible");
+  }
+  localStorage.setItem("overlap_seen_landing", "true");
+  startApp();
+}
+
+function updateMessageCount(count) {
+  const countEl = document.getElementById("message-count");
+  if (countEl) {
+    countEl.textContent = `${count} message${count === 1 ? "" : "s"}`;
+  }
+}
+
+function setActiveConversation(id) {
+  document.querySelectorAll(".convo").forEach((el) => {
+    el.classList.toggle("active", el.id === `convo-${id}`);
+  });
+}
+
+function closeSidebarIfMobile() {
+  if (closeSidebarRef && typeof closeSidebarRef === "function") {
+    if (window.innerWidth <= 1024) closeSidebarRef();
+  }
+}
 
 async function handleSend() {
   const inputEl = document.getElementById("message-input");
@@ -32,8 +76,11 @@ async function handleSend() {
   resizeTextarea(inputEl);
 
   const convId = window.conversation_id || uuid();
-  store.addConversation(convId, convId);
+  const title = text.length > 0 ? text.slice(0, 48).trim() : convId;
+  store.addConversation(convId, title || convId);
   store.addMessage(convId, "user", text);
+  updateMessageCount((await store.getConversation(convId)).messages.length);
+  setActiveConversation(convId);
 
   const token = message_id();
   renderUserMessage(token, text);
@@ -42,7 +89,8 @@ async function handleSend() {
   if (currentAbort) currentAbort.abort();
   currentAbort = new AbortController();
 
-  // stable IDs for the request
+  const customApiKey = localStorage.getItem("custom_api_key");
+
   let userId = localStorage.getItem("user_id");
   if (!userId) {
     userId = `user_${uuid().slice(0, 8)}`;
@@ -50,14 +98,11 @@ async function handleSend() {
   }
   const teamId = localStorage.getItem("team_id") || null;
 
-  // Get custom API key from localStorage if available
-  const customApiKey = localStorage.getItem("custom_api_key");
-
   const payload = {
     conversation_id: convId,
     action: "_ask",
-    model: document.getElementById("model")?.value || "default",
-    jailbreak: document.getElementById("jailbreak")?.value || "false",
+    model: "gpt-4o",
+    jailbreak: "default",
     ...(customApiKey ? { api_key: customApiKey } : {}),
     meta: {
       id: message_id(),
@@ -73,15 +118,12 @@ async function handleSend() {
       },
     },
   };
-  document.getElementById("join-team")?.addEventListener("click", () => {
-    alert("Join Team clicked!");
-  });
 
-  // If MOCK_MODE is active, simulate a streaming assistant response locally
+  showStopGenerating(true);
+
   let acc = "";
   if (MOCK_MODE) {
     const simulated = `Echo: ${text}\n\n(This is a local UI-only simulated response.)`;
-    // simulate streaming in small chunks
     const chunks = [];
     for (let i = 0; i < simulated.length; i += 20)
       chunks.push(simulated.slice(i, i + 20));
@@ -95,6 +137,7 @@ async function handleSend() {
         renderAssistantChunk(token, acc);
       }
       store.addMessage(convId, "assistant", acc);
+      updateMessageCount((await store.getConversation(convId)).messages.length);
     } catch (err) {
       if (err.name === "AbortError") {
         renderAssistantChunk(token, acc + " [aborted]");
@@ -105,7 +148,7 @@ async function handleSend() {
       }
     } finally {
       currentAbort = null;
-      // force scroll at end so user sees final content
+      showStopGenerating(false);
       scrollToBottom(true);
     }
     return;
@@ -122,6 +165,7 @@ async function handleSend() {
     );
 
     store.addMessage(convId, "assistant", acc);
+    updateMessageCount((await store.getConversation(convId)).messages.length);
   } catch (err) {
     if (err.name === "AbortError") {
       renderAssistantChunk(token, acc + " [aborted]");
@@ -132,12 +176,14 @@ async function handleSend() {
     }
   } finally {
     currentAbort = null;
+    showStopGenerating(false);
     scrollToBottom();
   }
 }
 
 function handleCancel() {
   if (currentAbort) currentAbort.abort();
+  showStopGenerating(false);
 }
 
 async function setConversation(id, conv) {
@@ -145,18 +191,22 @@ async function setConversation(id, conv) {
   clearMessages();
   if (!conv) conv = await store.getConversation(id);
   for (const m of conv.messages) {
+    const t = message_id();
     if (m.role === "user") {
-      const t = message_id();
       renderUserMessage(t, m.content);
     } else {
-      const t = message_id();
       createAssistantPlaceholder(t);
       renderAssistantChunk(t, m.content);
     }
   }
+  updateMessageCount(conv.messages.length);
+  setActiveConversation(id);
 }
 
-export async function init() {
+async function init() {
+  if (appInitialized) return;
+  appInitialized = true;
+
   const sendBtn = document.getElementById("send-button");
   const cancelBtn = document.getElementById("cancelButton");
   const inputEl = document.getElementById("message-input");
@@ -172,8 +222,6 @@ export async function init() {
     });
   }
 
-  // render into the dedicated list container; this keeps the New Conversation
-  // button and spinner intact (they live in #conversations)
   const listEl =
     document.getElementById("conversation-list") ||
     document.getElementById("conversations");
@@ -181,42 +229,43 @@ export async function init() {
     onSelect: async (id) => {
       const c = await store.getConversation(id);
       if (c) setConversation(id, c);
+      closeSidebarIfMobile();
     },
     onDelete: async (id) => {
       await store.deleteConversation(id);
       const l2 = await store.listConversations();
-      if (listEl) renderConversationList(listEl, l2, handlers);
+      if (listEl) {
+        renderConversationList(listEl, l2, handlers);
+        setActiveConversation(window.conversation_id);
+      }
     },
-    onShowOption: (id) => {
-      console.log("show options for", id);
-    },
+    onShowOption: () => {},
   };
 
   if (listEl) {
     const list = await store.listConversations();
     renderConversationList(listEl, list, handlers);
+    if (window.conversation_id) setActiveConversation(window.conversation_id);
   }
 
-  // focus the input so mobile/desktop shows the input area immediately
   if (inputEl) {
     try {
       inputEl.focus();
-    } catch (e) {
-      /* ignore */
-    }
+    } catch (e) {}
   }
 
-  // wire header buttons that previously used inline onclick attributes
   const newBtn = document.getElementById("new-convo-button");
   if (newBtn) {
     newBtn.addEventListener("click", async () => {
       const id = uuid();
       window.conversation_id = id;
-      store.addConversation(id, id);
+      store.addConversation(id, "New chat");
       clearMessages();
       const list = await store.listConversations();
-      if (listEl) renderConversationList(listEl, list, handlers);
-      // focus input after creating a new conversation
+      if (listEl) {
+        renderConversationList(listEl, list, handlers);
+        setActiveConversation(id);
+      }
       if (inputEl) {
         try {
           inputEl.focus();
@@ -231,15 +280,13 @@ export async function init() {
       store.clearConversations();
       clearMessages();
       if (listEl) renderConversationList(listEl, [], handlers);
+      updateMessageCount(0);
     });
   }
-  //create/persist a team_id when clicked
+
   const joinBtn = document.getElementById("join-team-button");
   if (joinBtn) {
-    // 1) Force the initial label every load (overrides any other JS writing to it)
     joinBtn.innerHTML = "<span>Join team A</span>";
-
-    // 2) Only create/persist the team_id on click — do NOT change the label
     joinBtn.addEventListener("click", () => {
       let teamId = localStorage.getItem("team_id");
       if (!teamId) {
@@ -247,12 +294,46 @@ export async function init() {
         teamId = `team_${raw.slice(0, 8)}`;
         localStorage.setItem("team_id", teamId);
       }
-      // keep label as "Join team A"
     });
   }
 
-  // Initialize API key settings
+  initMobileSidebar();
+  initStopGeneratingButton();
   initApiKeySettings();
+  initLogoNavigation();
+}
+
+function initMobileSidebar() {
+  const sidebar = document.getElementById("sidebar");
+  const overlay = document.getElementById("mobile-overlay");
+  const openBtn = document.getElementById("mobile-menu-btn");
+  const closeBtn = document.getElementById("sidebar-close-btn");
+
+  if (!sidebar || !overlay) return;
+
+  function openSidebar() {
+    sidebar.classList.add("open");
+    overlay.classList.add("active");
+  }
+
+  function closeSidebar() {
+    sidebar.classList.remove("open");
+    overlay.classList.remove("active");
+  }
+
+  closeSidebarRef = closeSidebar;
+
+  if (openBtn) openBtn.addEventListener("click", openSidebar);
+  if (closeBtn) closeBtn.addEventListener("click", closeSidebar);
+  overlay.addEventListener("click", closeSidebar);
+}
+
+function initStopGeneratingButton() {
+  const cancelBtn = document.getElementById("cancelButton");
+  if (cancelBtn) {
+    cancelBtn.addEventListener("click", () => showStopGenerating(false));
+  }
+  showStopGenerating(false);
 }
 
 function initApiKeySettings() {
@@ -263,16 +344,15 @@ function initApiKeySettings() {
   const saveBtn = document.getElementById("save-api-key-button");
   const clearBtn = document.getElementById("clear-api-key-button");
   const statusDiv = document.getElementById("api-key-status");
+  const panel = document.getElementById("settings-panel");
 
-  // Load saved API key on page load (don't show status message on initial load)
   const savedApiKey = localStorage.getItem("custom_api_key");
   if (savedApiKey && apiKeyInput) {
     apiKeyInput.value = savedApiKey;
-    // Add visual indicator that key is saved
-    apiKeyInput.style.borderColor = "var(--accent)";
+    apiKeyInput.style.borderColor = "var(--primary)";
+    panel?.classList.add("has-key");
   }
 
-  // Toggle settings visibility
   if (settingsToggle && settingsContent) {
     settingsToggle.addEventListener("click", () => {
       const isHidden = settingsContent.style.display === "none";
@@ -283,45 +363,88 @@ function initApiKeySettings() {
     });
   }
 
-  // Save API key
   if (saveBtn && apiKeyInput) {
     saveBtn.addEventListener("click", () => {
       const apiKey = apiKeyInput.value.trim();
       if (apiKey) {
         localStorage.setItem("custom_api_key", apiKey);
-        apiKeyInput.style.borderColor = "var(--accent)";
-        showStatus("API key saved successfully", "success");
+        apiKeyInput.style.borderColor = "var(--primary)";
+        panel?.classList.add("has-key");
+        showApiKeyStatus(statusDiv, "API key saved successfully", "success");
       } else {
         apiKeyInput.style.borderColor = "";
-        showStatus("Please enter an API key", "error");
+        panel?.classList.remove("has-key");
+        showApiKeyStatus(statusDiv, "Please enter an API key", "error");
       }
     });
   }
 
-  // Clear API key
   if (clearBtn && apiKeyInput) {
     clearBtn.addEventListener("click", () => {
       apiKeyInput.value = "";
       apiKeyInput.style.borderColor = "";
+      panel?.classList.remove("has-key");
       localStorage.removeItem("custom_api_key");
-      showStatus("API key cleared", "info");
+      showApiKeyStatus(statusDiv, "API key cleared", "success");
     });
-  }
-
-  function showStatus(message, type) {
-    if (!statusDiv) return;
-    statusDiv.textContent = message;
-    statusDiv.className = `api-key-status ${type}`;
-    setTimeout(() => {
-      if (statusDiv) {
-        statusDiv.textContent = "";
-        statusDiv.className = "api-key-status";
-      }
-    }, 3000);
   }
 }
 
-// auto-init on load
+function showApiKeyStatus(node, message, type) {
+  if (!node) return;
+  node.textContent = message;
+  node.className = `api-key-status ${type}`;
+  setTimeout(() => {
+    node.textContent = "";
+    node.className = "api-key-status";
+  }, 2500);
+}
+
+function startApp() {
+  if (!appInitialized) {
+    init().catch(console.error);
+  }
+  const landing = document.getElementById("landing-page");
+  const mainApp = document.getElementById("main-app");
+  if (landing) landing.style.display = "none";
+  if (mainApp) {
+    mainApp.style.display = "flex";
+    mainApp.classList.add("visible");
+  }
+}
+
+function initLogoNavigation() {
+  const landingLogo = document.getElementById("landing-logo");
+  const sidebarLogo = document.querySelector(".sidebar-logo");
+
+  if (landingLogo) {
+    landingLogo.style.cursor = "pointer";
+    landingLogo.addEventListener("click", showLanding);
+  }
+  if (sidebarLogo) {
+    sidebarLogo.style.cursor = "pointer";
+    sidebarLogo.addEventListener("click", showLanding);
+  }
+}
+
+function initLandingPage() {
+  const landing = document.getElementById("landing-page");
+  const mainApp = document.getElementById("main-app");
+  const startBtn = document.getElementById("start-chatting-btn");
+  const hasVisited = localStorage.getItem("overlap_seen_landing");
+
+  if (hasVisited) {
+    showChat();
+    return;
+  }
+
+  if (startBtn) {
+    startBtn.addEventListener("click", showChat);
+  } else {
+    startApp();
+  }
+}
+
 window.addEventListener("load", () => {
-  init().catch(console.error);
+  initLandingPage();
 });
