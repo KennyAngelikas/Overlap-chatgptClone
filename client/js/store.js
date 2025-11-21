@@ -86,6 +86,11 @@ export function addConversation(id, title = null) {
 export function addMessage(id, role, content) {
   if (!id) throw new Error('Conversation id required');
   const conv = getConversation(id);
+  if (!conv.title || conv.title === id) {
+    if (role === 'user' && content) {
+      conv.title = content.slice(0, 48).trim() || conv.title;
+    }
+  }
   const msg = { role: role || 'user', content: (content == null ? '' : content), ts: Date.now() };
   conv.messages.push(msg);
   saveConversation(conv);

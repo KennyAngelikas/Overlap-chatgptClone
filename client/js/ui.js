@@ -51,11 +51,12 @@ export function clearMessages() {
 export function renderUserMessage(token, text, user_image_html = '') {
   const box = getMessagesBox();
   if (!box) return;
+  const avatar = user_image_html || (typeof window !== 'undefined' ? window.user_image : '') || '';
   const wrapper = document.createElement('div');
   wrapper.className = 'message user';
   wrapper.id = `user_${token}`;
   wrapper.innerHTML = `
-    <div class="avatar">${user_image_html}</div>
+    <div class="avatar">${avatar}</div>
     <div class="content">${safeMarkdownRender(text)}</div>
   `;
   box.appendChild(wrapper);
@@ -66,13 +67,14 @@ export function renderUserMessage(token, text, user_image_html = '') {
 export function createAssistantPlaceholder(token, gpt_image_html = '') {
   const box = getMessagesBox();
   if (!box) return;
+  const avatar = gpt_image_html || (typeof window !== 'undefined' ? window.gpt_image : '') || '';
   const wrapper = document.createElement('div');
   wrapper.className = 'message assistant';
   wrapper.id = `gpt_${token}`;
   // store accumulated text in data attribute
   wrapper.dataset.text = '';
   wrapper.innerHTML = `
-    <div class="avatar">${gpt_image_html}</div>
+    <div class="avatar">${avatar}</div>
     <div class="content"><span class="cursor">▌</span></div>
   `;
   box.appendChild(wrapper);
@@ -129,11 +131,15 @@ export function renderConversationList(container, conversations, handlers = {}) 
     container.appendChild(empty);
     return;
   }
+  const activeId = window.conversation_id;
   conversations.forEach((conv) => {
     const id = conv.id;
     const item = document.createElement('div');
     item.className = 'convo';
     item.id = `convo-${id}`;
+    if (activeId === id) {
+      item.classList.add('active');
+    }
 
     // left column (click selects conversation)
     const left = document.createElement('div');

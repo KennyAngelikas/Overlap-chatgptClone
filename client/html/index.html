@@ -3,230 +3,182 @@
   <head>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0 maximum-scale=1.0"
-    />
-    <meta
-      name="description"
-      content="A conversational AI system that listens, learns, and challenges"
-    />
-    <meta property="og:title" content="ChatGPT" />
-    <meta
-      property="og:image"
-      content="https://openai.com/content/images/2022/11/ChatGPT.jpg"
-    />
-    <meta
-      property="og:description"
-      content="A conversational AI system that listens, learns, and challenges"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0 maximum-scale=1.0" />
+    <meta name="description" content="A conversational AI system that listens, learns, and challenges" />
+    <meta property="og:title" content="OverLap AI Chat" />
+    <meta property="og:image" content="https://openai.com/content/images/2022/11/ChatGPT.jpg" />
+    <meta property="og:description" content="A conversational AI system that listens, learns, and challenges" />
     <meta property="og:url" content="https://chat.acy.dev" />
     <link rel="stylesheet" href="/assets/css/style.css" />
-    <link
-      rel="apple-touch-icon"
-      sizes="180x180"
-      href="/assets/img/apple-touch-icon.png"
-    />
-    <link
-      rel="icon"
-      type="image/png"
-      sizes="32x32"
-      href="/assets/img/favicon-32x32.png"
-    />
-    <link
-      rel="icon"
-      type="image/png"
-      sizes="16x16"
-      href="/assets/img/favicon-16x16.png"
-    />
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/img/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/img/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/img/favicon-16x16.png" />
     <link rel="manifest" href="/assets/img/site.webmanifest" />
     <script src="/assets/js/icons.js"></script>
-    <!-- load legacy vendor scripts first, then the module entrypoint -->
     <script src="/assets/js/highlight.min.js"></script>
     <script src="/assets/js/highlightjs-copy.min.js"></script>
     <script type="module" src="/assets/js/main.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/markdown-it@latest/dist/markdown-it.min.js"></script>
-    <link
-      rel="stylesheet"
-      href="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@latest/build/styles/base16/dracula.min.css"
-    />
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@latest/build/styles/base16/dracula.min.css" />
     <script>
-      const user_image = `<img src="/assets/img/user.png" alt="User Avatar">`;
-      const gpt_image = `<img src="/assets/img/gpt.png" alt="GPT Avatar">`;
-    </script>
-    <style>
-      .hljs {
-        color: #e9e9f4;
-        background: #28293629;
-        border-radius: var(--border-radius-1);
-        border: 1px solid var(--blur-border);
-        font-size: 15px;
-      }
-
-      #message-input {
-        margin-right: 30px;
-        height: 80px;
-      }
-
-      #message-input::-webkit-scrollbar {
-        width: 5px;
-      }
-
-      /* Track */
-      #message-input::-webkit-scrollbar-track {
-        background: #f1f1f1;
-      }
-
-      /* Handle */
-      #message-input::-webkit-scrollbar-thumb {
-        background: #c7a2ff;
-      }
-
-      /* Handle on hover */
-      #message-input::-webkit-scrollbar-thumb:hover {
-        background: #8b3dff;
-      }
-    </style>
-    <script>
+      window.user_image = `<img src="/assets/img/user.png" alt="User Avatar">`;
+      window.gpt_image = `<img src="/assets/img/gpt.png" alt="GPT Avatar">`;
       window.conversation_id = `{{chat_id}}`;
     </script>
-    <title>ChatGPT</title>
+    <title>OverLap AI Chat</title>
   </head>
   <body>
-    <div class="gradient"></div>
-    <div class="row">
-      <div class="box conversations">
-        <div class="top" id="conversations">
-          <button class="new_convo" id="new-convo-button">
+    <div id="landing-page" class="landing-page">
+      <header class="landing-top">
+        <div class="landing-logo" id="landing-logo">
+          <div class="landing-logo-mark">O</div>
+          <span class="landing-logo-text">OverLap</span>
+        </div>
+      </header>
+
+      <main class="landing-hero">
+        <div class="hero-badge">
+          <i class="fa-regular fa-sparkles"></i>
+          <span>Next-generation AI conversations</span>
+        </div>
+        <h1 class="landing-title">
+          Where Ideas <span class="accent">OverLap</span>
+        </h1>
+        <p class="landing-subtitle">
+          Experience AI conversations like never before. Beautiful, fast, and intelligent chat interface powered by cutting-edge language models.
+        </p>
+        <div class="landing-ctas">
+          <button id="start-chatting-btn" class="cta-primary">
+            Start Chatting <i class="fa-regular fa-arrow-right"></i>
+          </button>
+          <button class="cta-secondary">Learn More</button>
+        </div>
+      </main>
+
+      <section class="feature-row">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="fa-regular fa-comments"></i></div>
+          <h3>Smart Conversations</h3>
+          <p>Context-aware responses that understand your needs.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon"><i class="fa-regular fa-bolt"></i></div>
+          <h3>Lightning Fast</h3>
+          <p>Real-time streaming responses with zero lag.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon"><i class="fa-regular fa-shield-check"></i></div>
+          <h3>Secure &amp; Private</h3>
+          <p>Your conversations stay private and encrypted.</p>
+        </div>
+      </section>
+
+      <footer class="landing-footer">
+        Experience AI chats that feel human, focused, and delightful.
+      </footer>
+    </div>
+
+    <div id="main-app" class="app-container" style="display: none;">
+      <div class="mobile-overlay" id="mobile-overlay"></div>
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+          <div class="sidebar-logo">
+            <div class="logo-icon">O</div>
+            <h1 class="logo-text">OverLap</h1>
+          </div>
+          <button class="sidebar-close-btn" id="sidebar-close-btn" aria-label="Close sidebar">
+            <i class="fa-regular fa-x"></i>
+          </button>
+        </div>
+        <div class="sidebar-section">
+          <button class="new-conversation-btn" id="new-convo-button">
             <i class="fa-regular fa-plus"></i>
             <span>New Conversation</span>
           </button>
-          <!-- dedicated list container so JS can replace items without
-                         removing the New Conversation button or spinner -->
+        </div>
+        <div class="sidebar-content" id="conversations">
           <div id="conversation-list" class="conversation-list"></div>
           <div class="spinner"></div>
         </div>
-        <div class="settings-section">
-          <button id="settings-toggle-button" class="settings-toggle">
-            <i class="fa-regular fa-gear"></i>
-            <span>Settings</span>
-            <i class="fa-regular fa-chevron-down" id="settings-chevron"></i>
-          </button>
-          <div id="settings-content" class="settings-content" style="display: none;">
-            <div class="settings-field">
-              <label for="api-key-input">API Key (Optional)</label>
-              <input 
-                type="password" 
-                id="api-key-input" 
-                placeholder="Enter your Gemini API key"
-                class="api-key-input"
-              />
-              <div class="settings-actions">
-                <button id="save-api-key-button" class="save-api-key-btn">
-                  <i class="fa-regular fa-save"></i>
-                  <span>Save</span>
-                </button>
-                <button id="clear-api-key-button" class="clear-api-key-btn">
-                  <i class="fa-regular fa-trash"></i>
-                  <span>Clear</span>
-                </button>
+        <div class="sidebar-section settings-section">
+          <div class="settings-panel" id="settings-panel">
+            <button class="settings-toggle" id="settings-toggle-button">
+              <div class="settings-toggle-content">
+                <div class="settings-indicator" id="settings-indicator"></div>
+                <span>Settings</span>
               </div>
-              <div id="api-key-status" class="api-key-status"></div>
+              <i class="fa-regular fa-chevron-down" id="settings-chevron"></i>
+            </button>
+            <div class="settings-content" id="settings-content" style="display: none;">
+              <div class="settings-field">
+                <label for="api-key-input">API Key</label>
+                <input type="password" id="api-key-input" placeholder="sk-..." class="api-key-input" />
+                <div class="settings-actions">
+                  <button id="save-api-key-button" class="save-api-key-btn">
+                    <i class="fa-regular fa-save"></i>
+                    <span>Save</span>
+                  </button>
+                  <button id="clear-api-key-button" class="clear-api-key-btn">
+                    <i class="fa-regular fa-x"></i>
+                    <span>Clear</span>
+                  </button>
+                </div>
+                <div id="api-key-status" class="api-key-status"></div>
+              </div>
             </div>
           </div>
         </div>
-        <div class="bottom_buttons">
-          <button id="join-team-button" type="button">
-            <span>Join team A</span>
+        <div class="sidebar-footer">
+          <button id="join-team-button" class="sidebar-action-btn">
+            <i class="fa-regular fa-users"></i>
+            <span>Join Team A</span>
           </button>
-          <button id="clear-conversations-button">
+          <button id="clear-conversations-button" class="sidebar-action-btn destructive">
             <i class="fa-regular fa-trash"></i>
             <span>Clear Conversations</span>
           </button>
         </div>
-      </div>
-      <div class="conversation disable-scrollbars">
-        <div class="stop_generating stop_generating-hidden">
-          <button id="cancelButton">
+      </aside>
+
+      <main class="chat-area">
+        <header class="chat-header">
+          <div class="chat-header-left">
+            <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Open menu">
+              <i class="fa-regular fa-bars"></i>
+            </button>
+          </div>
+          <div class="chat-header-right">
+            <span class="message-count" id="message-count">0 messages</span>
+            <div class="user-pill">
+              <i class="fa-regular fa-user"></i>
+            </div>
+          </div>
+        </header>
+
+        <div class="messages-container" id="messages"></div>
+
+        <div class="stop-generating" id="stop-generating" style="display: none;">
+          <button id="cancelButton" class="stop-btn">
             <span>Stop Generating</span>
             <i class="fa-regular fa-stop"></i>
           </button>
         </div>
-        <div class="box" id="messages"></div>
-        <div class="user-input">
-          <div class="box input-box">
+
+        <div class="input-area">
+          <div class="input-container">
             <textarea
               id="message-input"
-              placeholder="Ask a question"
-              cols="30"
-              rows="10"
-              style="white-space: pre-wrap"
+              placeholder="Type your message... (Shift+Enter for new line)"
+              class="message-input"
+              rows="1"
               oninput="resizeTextarea(this)"
             ></textarea>
-            <div id="send-button">
+            <button id="send-button" class="send-button" aria-label="Send message">
               <i class="fa-regular fa-paper-plane-top"></i>
-            </div>
+            </button>
           </div>
         </div>
-        <div class="buttons">
-          <div class="field">
-            <input type="checkbox" id="switch" />
-            <label for="switch"></label>
-            <span class="about">Web Access</span>
-          </div>
-          <div class="field">
-            <select name="model" id="model">
-              <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
-              <option value="gpt-4">gpt-4</option>
-              <option value="gpt-3.5-turbo-0301">gpt-3.5-turbo-0301</option>
-              <option value="gpt-4-0314">gpt-4-0314</option>
-              <option value="gpt-4-turbo">gpt-4-turbo</option>
-              <option value="gpt-4o" selected>gpt-4o</option>
-            </select>
-            <!-- <span class="about">Model</span> -->
-          </div>
-          <div class="field">
-            <select name="jailbreak" id="jailbreak">
-              <option value="default" selected>default</option>
-              <option value="gpt-math-1.0">math 1.0</option>
-              <option value="gpt-dude-1.0">dude 1.0</option>
-              <option value="gpt-dan-1.0">dan 1.0</option>
-              <option value="gpt-dan-2.0">dan 2.0</option>
-              <option value="gpt-dev-2.0">dev 2.0</option>
-              <option value="gpt-evil-1.0">evil 1.0</option>
-            </select>
-          </div>
-
-          <form class="color-picker" action="">
-            <fieldset>
-              <legend class="visually-hidden">Pick a color scheme</legend>
-              <label for="light" class="visually-hidden">Light</label>
-              <input
-                type="radio"
-                title="light"
-                name="theme"
-                id="light"
-                checked
-              />
-
-              <label for="pink" class="visually-hidden">Pink theme</label>
-              <input type="radio" title="pink" id="pink" name="theme" />
-
-              <label for="blue" class="visually-hidden">Blue theme</label>
-              <input type="radio" title="blue" id="blue" name="theme" />
-
-              <label for="green" class="visually-hidden">Green theme</label>
-              <input type="radio" title="green" id="green" name="theme" />
-
-              <label for="dark" class="visually-hidden">Dark theme</label>
-              <input type="radio" title="dark" id="dark" name="theme" />
-            </fieldset>
-          </form>
-        </div>
-      </div>
-    </div>
-    <div class="mobile-sidebar">
-      <i class="fa-solid fa-bars"></i>
+      </main>
     </div>
   </body>
 </html>
