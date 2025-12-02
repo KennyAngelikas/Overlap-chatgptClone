@@ -1,5 +1,6 @@
 name: Deploy to Vercel
 
+# Trigger the workflow on push to the main branch
 on:
   push:
     branches:

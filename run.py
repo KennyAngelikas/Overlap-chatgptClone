@@ -1,43 +1,90 @@
-from server.app     import app
-from server.website import Website
-from server.controller.conversation_controller import ConversationController
 import os
+from json import load
+from time import time
+from os import urandom
+from pathlib import Path
+
+from flask import Flask, render_template, send_file, redirect
+
+from server.controller.conversation_controller import ConversationController
 from server.controller.teams_memory_controller import TeamsMemoryController
 from server.controller.teams_db_controller import TeamsDBController
-from json import load
 
-# --- VERCEL FIX: MOVED ROUTE LOGIC OUTSIDE __main__ ---
+# --- PATHS & APP SETUP ---
+'''
+This is saving where does the html lives, we need this to give to Flask 
+the html folder so it can send the html to the browser
+'''
+BASE_DIR = Path(__file__).resolve().parent
+CLIENT_DIR = BASE_DIR / "client"
+TEMPLATE_DIR = CLIENT_DIR / "html" 
 
-# This code will now run when Vercel imports the file
-config = load(open('config.json', 'r'))
-site_config = config['site_config']
+# App is the flask app object, where all routes hang off of
+# We tell Flask where to find the html templates, so render_template works
+app = Flask(__name__, template_folder=str(TEMPLATE_DIR))
 
-site = Website(app)
-for route in site.routes:
-    app.add_url_rule(
-        route,
-        view_func = site.routes[route]['function'],
-        methods   = site.routes[route]['methods'],
+# Load config for local dev (port, host, etc.)
+config = load(open(BASE_DIR / "config.json", "r"))
+site_config = config["site_config"]
+
+
+# --- FRONTEND ROUTES (what Website used to do) ---
+
+def _generate_chat_id() -> str:
+    """Generate a chat_id similar to the old Website._index implementation."""
+    return (
+        f"{urandom(4).hex()}-"
+        f"{urandom(2).hex()}-"
+        f"{urandom(2).hex()}-"
+        f"{urandom(2).hex()}-"
+        f"{hex(int(time() * 1000))[2:]}"
     )
 
+
+@app.route("/", methods=["GET", "POST"])
+def root():
+    # Old Website behavior: redirect "/" -> "/chat"
+    return redirect("/chat/")
+
+
+@app.route("/chat/", methods=["GET", "POST"])
+def chat_index():
+    # Old Website._index: render index.html with a fresh chat_id
+    return render_template("index.html", chat_id=_generate_chat_id())
+
+
+@app.route("/chat/<conversation_id>", methods=["GET", "POST"])
+def chat(conversation_id):
+    # Old Website._chat: validate, then render with that conversation_id
+    if "-" not in conversation_id:
+        return redirect("/chat/")
+    return render_template("index.html", chat_id=conversation_id)
+
+
+@app.route("/assets/<folder>/<file>", methods=["GET", "POST"])
+def assets(folder: str, file: str):
+    # Old Website._assets: serve static files from client/
+    filepath = CLIENT_DIR / folder / file
+    if not filepath.exists():
+        return "File not found", 404
+    return send_file(str(filepath), as_attachment=False)
+
+
+# --- API CONTROLLERS (unchanged behavior) ---
+
+# Conversation API routes
 ConversationController(app)
+
 # Prefer DB-backed teams controller when DB environment is present
-if os.environ.get('DB_HOST') or os.environ.get('DATABASE_URL'):
+if os.environ.get("DB_HOST") or os.environ.get("DATABASE_URL"):
     TeamsDBController(app)
 else:
     TeamsMemoryController(app)
 
-# We also need to add the root route you were missing
-@app.route('/', methods=['GET'])
-def handle_root():
-    # You can return a real page, or just a simple message
-    return "Hello, my VAn_buil_buil_t app is working!"
 
-# --- END VERCEL FIX ---
+# --- LOCAL DEV ENTRYPOINT (Vercel will NOT run this) ---
 
-
-# This block will *only* be used when you run "python run.py" locally
-if __name__ == '__main__':
+if __name__ == "__main__":
     print(f"Running on port {site_config['port']}")
     app.run(**site_config)
     print(f"Closing port {site_config['port']}")
