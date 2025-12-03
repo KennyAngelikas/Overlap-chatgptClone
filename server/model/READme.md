@@ -28,6 +28,14 @@ Each Team object in the list will have the following structure:
     }
   }
 ]
+
+user -- firebase
+- id 
+- skills (option 1: gemini save it, **option 2: hard code**)
+
+team -- 
+  team members
+
 ```
 #Field Descriptions
 team_id (Integer): The unique numeric ID for the team.
