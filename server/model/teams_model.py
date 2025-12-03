@@ -53,23 +53,5 @@ def create_team(team_name: str, member_limit: Optional[int] = None) -> Optional[
         return None
 
 
-def add_member(team_id: int, user_key: str, user_email: str) -> bool:
-    """Add or update a member in the team's user_id JSONB map."""
-    try:
-        ensure_team_table()
-        with get_db_cursor(dict_cursor=True) as (conn, cur):
-            cur.execute("SELECT user_id FROM team_skills WHERE team_id = %s;", (team_id,))
-            row = cur.fetchone()
-            if not row:
-                return False
-            user_id = row.get('user_id') or {}
-            user_id[user_key] = user_email
-            cur.execute("UPDATE team_skills SET user_id = %s WHERE team_id = %s;", (Json(user_id), team_id))
-            return True
-    except Exception as e:
-        print(f"Error adding member: {e}", file=sys.stderr)
-        return False
-
-
 def list_teams() -> List[Dict[str, Any]]:
     return get_team_skills_data()

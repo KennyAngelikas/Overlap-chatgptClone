@@ -31,6 +31,7 @@ def build_system_prompt():
     # 3. Fetch the skills and combine
     try:
         skills_data = fetchSkills() # e.g., "user1: Python, React\nuser2: Docker"
+        # print("Fetched team skills data:", skills_data)  # Debug print
         team_skills_context += skills_data
     except Exception as e:
         print(f"Error fetching team skills: {e}")
