@@ -26,4 +26,4 @@ if not GEMINI_API_KEY:
 
 # Single model this app uses for all Gemini calls.
 # If you ever want to switch models, change this string.
-GEMINI_MODEL = "gemini-1.5-flash"
+GEMINI_MODEL = "gemini-2.5-flash"
