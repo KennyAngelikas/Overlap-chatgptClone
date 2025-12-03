@@ -20,6 +20,7 @@ class ConversationController:
         try:
             # 1. Parse request
             json_data = request.json
+            print("Received conversation request:", dumps(json_data, indent=2))  # Debug print
             _conversation = json_data['meta']['content']['conversation']
             prompt = json_data['meta']['content']['parts'][0]
             model = json_data.get( 'gemini-1.5-flash')
@@ -47,7 +48,7 @@ class ConversationController:
             # print("Using Gemini Key:", api_key is not None)  # Debug print
             # 6. Get the streaming response (using our service)
             response = gemini_service.stream_gemini_response(
-                'gemini-1.5-flash', 
+                'gemini-2.5-flash', 
                 payload_body, 
                 api_key, 
             )
