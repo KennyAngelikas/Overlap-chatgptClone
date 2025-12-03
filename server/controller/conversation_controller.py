@@ -20,7 +20,6 @@ class ConversationController:
         try:
             # 1. Parse request
             json_data = request.json
-            print("Received conversation request:", dumps(json_data, indent=2))  # Debug print
             _conversation = json_data['meta']['content']['conversation']
             prompt = json_data['meta']['content']['parts'][0]
             model = json_data.get( 'gemini-1.5-flash')
