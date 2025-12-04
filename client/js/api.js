@@ -1,15 +1,39 @@
 // Minimal API module: streaming POST to backend conversation endpoint.
 // Exports streamConversation(payload, onChunk, signal) -> returns final accumulated text.
+function ensureUserIdentity() {
+  const userId = localStorage.getItem("user_id");
 
+  // STRICT CHECK: If no User ID, redirect immediately
+  if (!userId) {
+    window.location.href = "/";
+    // Throwing an error stops the rest of the function from running
+    throw new Error("User not logged in. Redirecting...");
+  }
+
+  let userEmail = localStorage.getItem("user_email");
+  
+  // We can keep the email fallback as a safety measure, 
+  // but the ID is now strictly required.
+  if (!userEmail) {
+    userEmail = `${userId}@overlap.local`;
+  }
+  
+  return { userId, userEmail };
+}
 export async function streamConversation(payload, onChunk, signal) {
   const url = '/backend-api/v2/conversation';
+  const { userId, userEmail } = ensureUserIdentity();
+  const teamId = localStorage.getItem("team_id") || null;
+
 
   const res = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Accept': 'text/event-stream'
-    },
+      'Accept': 'text/event-stream',
+      'X-User-ID': userId,
+      'X-User-Email': userEmail,
+      'X-Team-ID': teamId },
     body: JSON.stringify(payload),
     signal
   });

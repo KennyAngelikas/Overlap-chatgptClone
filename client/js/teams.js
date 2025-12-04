@@ -1,5 +1,4 @@
-// Simple teams helper stored in localStorage (UI-first option)
-const PREFIX = 'team:';
+// Simple teams helper (API-only, no local mock data)
 const SELECTED_KEY = 'selected_team';
 const TEAM_ENDPOINTS = ['/backend-api/v2/teams', '/backend-api/v2/teams_memory'];
 
@@ -12,44 +11,6 @@ function storageAvailable() {
   } catch (e) {
     return false;
   }
-}
-
-function key(id) { return `${PREFIX}${id}`; }
-
-function readRaw(k) { return storageAvailable() ? localStorage.getItem(k) : null; }
-function writeRaw(k, v) { if (storageAvailable()) localStorage.setItem(k, v); }
-
-function safeParse(v) { try { return JSON.parse(v); } catch (e) { return null; } }
-
-export function listLocalTeams() {
-  const out = [];
-  if (!storageAvailable()) return out;
-  for (let i = 0; i < localStorage.length; i++) {
-    const k = localStorage.key(i);
-    if (!k || !k.startsWith(PREFIX)) continue;
-    const t = safeParse(localStorage.getItem(k));
-    if (t && t.id) out.push(t);
-  }
-  out.sort((a,b)=> (a.id - b.id));
-  return out;
-}
-
-export function createLocalTeam(name, memberLimit = null) {
-  if (!name) return null;
-  const id = Date.now();
-  const team = { id, name, members: {}, member_limit: memberLimit };
-  writeRaw(key(id), JSON.stringify(team));
-  return team;
-}
-
-export function joinLocalTeam(teamId, userKey, userEmail) {
-  if (!teamId || !userKey || !userEmail) return false;
-  const raw = readRaw(key(teamId));
-  const team = safeParse(raw) || { id: teamId, name: `team-${teamId}`, members: {} };
-  team.members = team.members || {};
-  team.members[userKey] = userEmail;
-  writeRaw(key(teamId), JSON.stringify(team));
-  return true;
 }
 
 export function getSelectedTeamId() {
@@ -65,11 +26,6 @@ export function setSelectedTeamId(id) {
   if (id == null) { localStorage.removeItem(SELECTED_KEY); return true; }
   localStorage.setItem(SELECTED_KEY, String(id));
   return true;
-}
-
-export function getTeam(teamId) {
-  const raw = readRaw(key(teamId));
-  return safeParse(raw);
 }
 
 function normalizeTeam(team) {
@@ -116,59 +72,36 @@ async function tryTeamsApi(method, suffix = '', body = null) {
 }
 
 export async function fetchTeamsList() {
-  try {
-    const data = await tryTeamsApi('GET');
-    const teams = Array.isArray(data.teams) ? data.teams.map(normalizeTeam).filter(Boolean) : [];
-    return teams;
-  } catch (err) {
-    // fallback to local storage when API is unavailable
-    return listLocalTeams();
-  }
+  const data = await tryTeamsApi('GET');
+  const teams = Array.isArray(data.teams) ? data.teams.map(normalizeTeam).filter(Boolean) : [];
+  return teams;
 }
 
 export async function createTeamRecord(name, memberLimit = null) {
-  try {
-    const payload = { team_name: name, member_limit: memberLimit };
-    const data = await tryTeamsApi('POST', '', payload);
-    const team = normalizeTeam({
-      id: data.team_id,
-      name: data.team_name || name,
-      member_limit: data.member_limit ?? memberLimit,
-      members: {}
-    });
-    if (team && team.id) {
-      writeRaw(key(team.id), JSON.stringify(team));
-      setSelectedTeamId(team.id);
-    }
-    return { team, source: 'remote', success: true };
-  } catch (err) {
-    const team = createLocalTeam(name, memberLimit);
-    setSelectedTeamId(team?.id || null);
-    return { team, source: 'local', success: !!team, error: err.message };
+  const payload = { team_name: name, member_limit: memberLimit };
+  const data = await tryTeamsApi('POST', '', payload);
+  const team = normalizeTeam({
+    id: data.team_id,
+    name: data.team_name || name,
+    member_limit: data.member_limit ?? memberLimit,
+    members: {}
+  });
+  if (team && team.id) {
+    setSelectedTeamId(team.id);
   }
+  return { team, source: 'remote', success: true };
 }
 
 export async function joinTeamRecord(teamId, userKey, userEmail) {
-  try {
-    const payload = { team_id: teamId, user_key: userKey, user_email: userEmail };
-    await tryTeamsApi('POST', '/join', payload);
-    joinLocalTeam(teamId, userKey, userEmail);
-    setSelectedTeamId(teamId);
-    return { success: true, source: 'remote' };
-  } catch (err) {
-    const ok = joinLocalTeam(teamId, userKey, userEmail);
-    setSelectedTeamId(teamId);
-    return { success: ok, source: 'local', error: err.message };
-  }
+  const payload = { team_id: teamId, user_key: userKey, user_email: userEmail };
+  await tryTeamsApi('POST', '/join', payload);
+  setSelectedTeamId(teamId);
+  return { success: true, source: 'remote' };
 }
 
 export default {
-  listLocalTeams,
-  createLocalTeam,
-  joinLocalTeam,
   getSelectedTeamId,
   setSelectedTeamId,
-  getTeam,
   fetchTeamsList,
   createTeamRecord,
   joinTeamRecord,

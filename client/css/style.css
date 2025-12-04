@@ -274,19 +274,72 @@ textarea {
   align-items: center;
   gap: 12px;
 }
+/* =========================================
+   SIDEBAR LOGO FIX (Force Override)
+   ========================================= */
 
-.logo-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
-  background: var(--accent);
-  display: grid;
-  place-items: center;
-  color: #05070b;
-  font-weight: 800;
+/* 1. Target the Link Wrapper */
+.sidebar-header .sidebar-logo {
+  display: flex !important;
+  align-items: center;
+  gap: 12px;
+  
+  /* FORCE remove underline */
+  text-decoration: none !important;
+  border: none !important;
+  
+  cursor: pointer;
+  width: fit-content;
 }
 
-.logo-text { font-size: 18px; font-weight: 700; color: #f5f6f7; }
+/* 2. Target the 'O' Icon Box */
+.sidebar-header .sidebar-logo .logo-icon {
+  /* Force dimensions so it doesn't collapse */
+  display: flex !important;
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px; /* Prevents squishing */
+  
+  border-radius: 8px;
+  align-items: center;
+  justify-content: center;
+  
+  /* Colors */
+  background-color: #3b82f6; /* bright blue fallback */
+  background: var(--accent, #3b82f6);
+  color: #000 !important; /* Force black text inside the box */
+  font-weight: 800;
+  
+  /* Animation setup */
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* 3. Target the 'OverLap' Text */
+.sidebar-header .sidebar-logo .logo-text {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+  
+  /* Force white text so it's visible */
+  color: #fff !important; 
+  
+  /* Animation setup */
+  transition: transform 0.3s ease;
+}
+
+/* =========================================
+   HOVER EFFECTS
+   ========================================= */
+
+/* Rotate Icon on Hover */
+.sidebar-header .sidebar-logo:hover .logo-icon {
+  transform: rotate(-12deg) scale(1.1);
+}
+
+/* Slide Text on Hover */
+.sidebar-header .sidebar-logo:hover .logo-text {
+  transform: translateX(4px);
+}
 
 .sidebar-close-btn,
 .mobile-menu-btn {
@@ -791,70 +844,112 @@ textarea {
 }
 
 .chat-header {
-  height: 58px;
-  border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 20px;
-  background: #0c0e12;
+  justify-content: space-between; /* Pushes items to left/center/right */
+  height: 60px;
+  padding: 0 16px;
+  background-color: var(--bg-secondary, #1a1a1a); /* Dark background */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.chat-header-left,
+.chat-header-right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.chat-header-right {
+  justify-content: flex-end;
+  gap: 12px;
 }
 
 .chat-header-center {
-  flex: 1;
+  flex: 2;
   display: flex;
   justify-content: center;
 }
 
 .team-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  border-radius: 14px;
-  border: 1px solid var(--border);
-  background: #0f1115;
-  cursor: pointer;
-  transition: border 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
-}
-
-.team-chip:hover { border-color: rgba(90,200,250,0.35); transform: translateY(-1px); }
-.team-chip-icon {
-  width: 34px;
-  height: 34px;
-  border-radius: 12px;
-  background: linear-gradient(145deg, rgba(90,200,250,0.12), rgba(210,86,255,0.12));
-  display: grid;
-  place-items: center;
-  color: var(--text);
-}
-.team-chip-text { display: flex; flex-direction: column; gap: 2px; line-height: 1.1; }
-.team-chip-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
-.team-chip-name { font-weight: 700; }
-
-.message-count {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: #13161d;
-  color: var(--muted);
+  padding: 6px 12px;
+  background-color: rgba(255, 255, 255, 0.05); /* Subtle bubble background */
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+  border: 1px solid transparent;
+  max-width: 200px;
+}
+
+.team-chip:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.team-chip-icon {
+  font-size: 14px;
+  color: #888;
+}
+
+.team-chip-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.team-chip-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: #666;
+  font-weight: 600;
+}
+
+.team-chip-name {
   font-size: 13px;
+  font-weight: 500;
+  color: #eee;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --- Buttons & Pills --- */
+.icon-button {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  transition: color 0.2s;
+}
+
+.icon-button:hover {
+  color: #fff;
+  background-color: rgba(255,255,255,0.05);
+}
+
+.message-count {
+  font-size: 12px;
+  color: #666;
+  margin-right: 8px;
 }
 
 .user-pill {
-  width: 34px;
-  height: 34px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: #13161d;
-  display: grid;
-  place-items: center;
-  color: var(--muted);
-  margin-left: 10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #3b82f6; /* Blue circle */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 14px;
 }
 
 .icon-button {
@@ -918,13 +1013,30 @@ textarea {
   object-fit: cover;
   border-radius: 10px;
 }
+/* Sidebar Home/Close Button */
+a.sidebar-logo {
+  text-decoration: none !important; /* Removes underline */
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: inherit;
+}
+
+/* Hover State */
+.sidebar-logo:hover {
+  background-color: rgba(255, 255, 255, 0.1); /* Subtle background highlight */
+  color: #fff; /* Brighten the icon if it's gray */
+  transform: scale(1.05); /* Slight pop effect */
+  cursor: pointer;
+}
+
 
 .message .content {
   padding: 14px 16px;
   border-radius: 16px;
   background: #11141a;
   border: 1px solid var(--border);
-  line-break: anywhere;
+  word-wrap: break-word;
   box-shadow: 0 10px 24px rgba(0,0,0,0.3);
   color: #e6e8ed;
 }
@@ -1082,4 +1194,27 @@ body.compact-mode .conversation-list-items { gap: 8px; }
 @keyframes fade-in {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+.landing-top {
+  display: flex;
+  justify-content: space-between; /* Pushes logo left, auth btn right */
+  align-items: center;
+  padding: 20px 40px;
+}
+
+.auth-btn {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.auth-btn:hover {
+  background: rgba(255,255,255,0.1);
+  border-color: #fff;
 }

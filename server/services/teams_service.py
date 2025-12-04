@@ -1,8 +1,8 @@
 from server.model.teams_model import get_team_skills_data
 
 
-def fetchSkills():
-    team_skills_row = get_team_skills_data()[0]
+def fetchSkills(team_id: str) -> str:
+    team_skills_row = get_team_skills_data(team_id)[0]
     user_ids = team_skills_row.get("user_id", {})
     soft_skills = team_skills_row.get("soft_skills", {})
     hard_skills = team_skills_row.get("hard_skills", {})

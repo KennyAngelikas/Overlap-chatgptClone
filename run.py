@@ -9,7 +9,10 @@ from flask import Flask, render_template, send_file, redirect
 from server.controller.conversation_controller import ConversationController
 from server.controller.teams_memory_controller import TeamsMemoryController
 from server.controller.teams_db_controller import TeamsDBController
+from dotenv import load_dotenv 
 
+# Load the .env file
+load_dotenv()
 # --- PATHS & APP SETUP ---
 '''
 This is saving where does the html lives, we need this to give to Flask 
@@ -41,16 +44,30 @@ def _generate_chat_id() -> str:
     )
 
 
-@app.route("/", methods=["GET", "POST"])
-def root():
-    # Old Website behavior: redirect "/" -> "/chat"
-    return redirect("/chat/")
+from dotenv import load_dotenv 
+
+
+# Helper to get config
+def get_firebase_config():
+    return {
+        "apiKey": os.getenv("FIREBASE_API_KEY"),
+        "authDomain": os.getenv("FIREBASE_AUTH_DOMAIN"),
+        "projectId": os.getenv("FIREBASE_PROJECT_ID"),
+        "storageBucket": os.getenv("FIREBASE_STORAGE_BUCKET"),
+        "messagingSenderId": os.getenv("FIREBASE_MESSAGING_SENDER_ID"),
+        "appId": os.getenv("FIREBASE_APP_ID")
+    }
+
+@app.route('/')
+def home():
+    # Pass config to the landing page
+    return render_template('index.html', firebase_config=get_firebase_config())
 
 
 @app.route("/chat/", methods=["GET", "POST"])
 def chat_index():
     # Old Website._index: render index.html with a fresh chat_id
-    return render_template("index.html", chat_id=_generate_chat_id())
+    return render_template("chat.html", chat_id=_generate_chat_id())
 
 
 @app.route("/chat/<conversation_id>", methods=["GET", "POST"])
@@ -58,7 +75,7 @@ def chat(conversation_id):
     # Old Website._chat: validate, then render with that conversation_id
     if "-" not in conversation_id:
         return redirect("/chat/")
-    return render_template("index.html", chat_id=conversation_id)
+    return render_template("chat.html", chat_id=conversation_id)
 
 
 @app.route("/assets/<folder>/<file>", methods=["GET", "POST"])
