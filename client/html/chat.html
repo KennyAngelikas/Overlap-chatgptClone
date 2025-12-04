@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="/assets/css/style.css" />
     <link rel="icon" type="image/png" sizes="32x32" href="/assets/img/favicon-32x32.png" />
     
-    <script src="/assets/js/icons.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <script src="/assets/js/highlight.min.js"></script>
     <script src="/assets/js/highlightjs-copy.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/markdown-it@latest/dist/markdown-it.min.js"></script>
@@ -43,7 +43,7 @@
         </div>
         <div class="sidebar-footer">
           <button id="clear-conversations-button" class="sidebar-action-btn destructive">
-            <i class="fa-regular fa-trash"></i>
+            <i class="fa-solid fa-trash-can"></i>
             <span>Clear Conversations</span>
           </button>
         </div>
@@ -53,28 +53,28 @@
         <header class="chat-header">
           <div class="chat-header-left">
             <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Open menu">
-              <i class="fa-regular fa-bars"></i>
+              <i class="fa-solid fa-bars"></i>
             </button>
           </div>
           <div class="chat-header-center">
             <div class="team-chip" id="team-chip">
               <div class="team-chip-icon">
-                <i class="fa-regular fa-users"></i>
+                <i class="fa-solid fa-user-group"></i>
               </div>
               <div class="team-chip-text">
                 <span class="team-chip-label">Active team</span>
                 <span class="team-chip-name" id="active-team-name">Personal space</span>
               </div>
-              <i class="fa-regular fa-chevron-down"></i>
+              <i class="fa-solid fa-chevron-down"></i>
             </div>
           </div>
           <div class="chat-header-right">
             <span class="message-count" id="message-count">0 messages</span>
             <button class="icon-button ghost" id="open-settings" aria-label="Open settings">
-              <i class="fa-regular fa-gear"></i>
+              <i class="fa-solid fa-gear"></i>
             </button>
             <div class="user-pill">
-              <i class="fa-regular fa-user"></i>
+              <i class="fa-solid fa-user"></i>
             </div>
           </div>
         </header>
@@ -98,7 +98,7 @@
               oninput="resizeTextarea(this)"
             ></textarea>
             <button id="send-button" class="send-button" aria-label="Send message">
-              <i class="fa-regular fa-paper-plane-top"></i>
+              <i class="fa-regular fa-paper-plane"></i>
             </button>
           </div>
         </div>
@@ -115,7 +115,7 @@
             <p class="subhead">API keys, toggles, and teams in one calm space.</p>
           </div>
           <button id="close-settings" class="icon-button">
-            <i class="fa-regular fa-x"></i>
+            <i class="fa-solid fa-xmark"></i>
           </button>
         </div>
         <div class="settings-tabs">
@@ -188,7 +188,7 @@
                   <h4>Choose a team</h4>
                 </div>
                 <button id="refresh-teams-button" class="pill-btn ghost small">
-                  <i class="fa-regular fa-rotate-right"></i>
+                  <i class="fa-solid fa-arrows-rotate"></i>
                   <span>Refresh</span>
                 </button>
               </div>
@@ -201,7 +201,7 @@
               </div>
               <div class="team-actions-inline">
                 <button id="join-team-button" class="pill-btn success wide">
-                  <i class="fa-regular fa-badge-check"></i>
+                  <i class="fa-regular fa-circle-check"></i>
                   <span>Join selected</span>
                 </button>
                 <div id="team-status" class="team-status compact"></div>
@@ -221,7 +221,7 @@
                 <label class="field-label" for="settings-team-size">Member limit (optional)</label>
                 <input type="number" id="settings-team-size" min="1" class="field-input" placeholder="10" />
                 <button id="settings-create-team" class="pill-btn primary wide">
-                  <i class="fa-regular fa-plus"></i>
+                  <i class="fa-solid fa-plus"></i>
                   <span>Create team</span>
                 </button>
                 <div id="settings-create-error" class="team-status error"></div>

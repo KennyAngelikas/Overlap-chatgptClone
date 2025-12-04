@@ -11,7 +11,7 @@
     <script src="/assets/js/icons.js"></script>
     <script type="module" src="/assets/js/main.js"></script>
     <script>
-      window.FIREBASE_CONFIG = {{ firebase_config | tojson }};
+      window.FIREBASE_CONFIG = {{ firebase_config | tojson | safe }};
     </script>
   </head>
   <body>

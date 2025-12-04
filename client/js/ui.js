@@ -7,7 +7,7 @@ function getMessagesBox() {
 
 function safeMarkdownRender(text) {
   if (window.markdownit) {
-    try { return window.markdownit().render(text); } catch (e) { /* fallthrough */ }
+    try { return window.markdownit({ breaks: true }).render(text); } catch (e) { /* fallthrough */ }
   }
   // very small fallback: escape HTML and replace newlines
   const esc = String(text)
@@ -145,7 +145,7 @@ export function renderConversationList(container, conversations, handlers = {}) 
     const left = document.createElement('div');
     left.className = 'left';
     const icon = document.createElement('i');
-    icon.className = 'fa-regular fa-comments';
+    icon.className = 'fa-regular fa-message';
     left.appendChild(icon);
     const span = document.createElement('span');
     span.className = 'convo-title';
@@ -155,24 +155,24 @@ export function renderConversationList(container, conversations, handlers = {}) 
 
     // action icons (trash, confirm, cancel)
     const trash = document.createElement('i');
-    trash.className = 'fa-regular fa-trash';
+    trash.className = 'fa-solid fa-trash-can';
     trash.id = `conv-${id}`;
     item.appendChild(trash);
 
     const yes = document.createElement('i');
-    yes.className = 'fa-regular fa-check';
+    yes.className = 'fa-solid fa-check';
     yes.id = `yes-${id}`;
     yes.style.display = 'none';
     item.appendChild(yes);
 
     const no = document.createElement('i');
-    no.className = 'fa-regular fa-x';
+    no.className = 'fa-solid fa-xmark';
     no.id = `not-${id}`;
     no.style.display = 'none';
     item.appendChild(no);
 
     // wire events
-    left.addEventListener('click', (e) => {
+    item.addEventListener('click', (e) => {
       if (handlers.onSelect) handlers.onSelect(id);
     });
 

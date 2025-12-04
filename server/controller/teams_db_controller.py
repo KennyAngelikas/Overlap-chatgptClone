@@ -1,6 +1,6 @@
 import json
 from flask import request
-from server.model.teams_model import create_team, list_teams
+from server.model.teams_model import create_team, list_teams, add_member
 
 
 class TeamsDBController:

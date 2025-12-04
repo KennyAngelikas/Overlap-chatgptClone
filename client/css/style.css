@@ -844,70 +844,112 @@ textarea {
 }
 
 .chat-header {
-  height: 58px;
-  border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 20px;
-  background: #0c0e12;
+  justify-content: space-between; /* Pushes items to left/center/right */
+  height: 60px;
+  padding: 0 16px;
+  background-color: var(--bg-secondary, #1a1a1a); /* Dark background */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.chat-header-left,
+.chat-header-right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.chat-header-right {
+  justify-content: flex-end;
+  gap: 12px;
 }
 
 .chat-header-center {
-  flex: 1;
+  flex: 2;
   display: flex;
   justify-content: center;
 }
 
 .team-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  border-radius: 14px;
-  border: 1px solid var(--border);
-  background: #0f1115;
-  cursor: pointer;
-  transition: border 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
-}
-
-.team-chip:hover { border-color: rgba(90,200,250,0.35); transform: translateY(-1px); }
-.team-chip-icon {
-  width: 34px;
-  height: 34px;
-  border-radius: 12px;
-  background: linear-gradient(145deg, rgba(90,200,250,0.12), rgba(210,86,255,0.12));
-  display: grid;
-  place-items: center;
-  color: var(--text);
-}
-.team-chip-text { display: flex; flex-direction: column; gap: 2px; line-height: 1.1; }
-.team-chip-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
-.team-chip-name { font-weight: 700; }
-
-.message-count {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: #13161d;
-  color: var(--muted);
+  padding: 6px 12px;
+  background-color: rgba(255, 255, 255, 0.05); /* Subtle bubble background */
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+  border: 1px solid transparent;
+  max-width: 200px;
+}
+
+.team-chip:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.team-chip-icon {
+  font-size: 14px;
+  color: #888;
+}
+
+.team-chip-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.team-chip-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: #666;
+  font-weight: 600;
+}
+
+.team-chip-name {
   font-size: 13px;
+  font-weight: 500;
+  color: #eee;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --- Buttons & Pills --- */
+.icon-button {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  transition: color 0.2s;
+}
+
+.icon-button:hover {
+  color: #fff;
+  background-color: rgba(255,255,255,0.05);
+}
+
+.message-count {
+  font-size: 12px;
+  color: #666;
+  margin-right: 8px;
 }
 
 .user-pill {
-  width: 34px;
-  height: 34px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: #13161d;
-  display: grid;
-  place-items: center;
-  color: var(--muted);
-  margin-left: 10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #3b82f6; /* Blue circle */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 14px;
 }
 
 .icon-button {
@@ -972,15 +1014,12 @@ textarea {
   border-radius: 10px;
 }
 /* Sidebar Home/Close Button */
-.sidebar-logo{
+a.sidebar-logo {
+  text-decoration: none !important; /* Removes underline */
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
-  transition: all 0.2s ease;
-  color: inherit; /* Keeps the color consistent with parent */
+  gap: 10px;
+  color: inherit;
 }
 
 /* Hover State */
@@ -997,7 +1036,7 @@ textarea {
   border-radius: 16px;
   background: #11141a;
   border: 1px solid var(--border);
-  line-break: anywhere;
+  word-wrap: break-word;
   box-shadow: 0 10px 24px rgba(0,0,0,0.3);
   color: #e6e8ed;
 }

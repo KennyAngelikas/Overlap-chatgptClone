@@ -3,7 +3,7 @@ from datetime import datetime
 # We assume fetchSkills is in this location, as per your original file
 from server.services.teams_service import fetchSkills 
 
-def build_system_prompt():
+def build_system_prompt(team_id: str, user_id: str, user_email: str) -> str:
     """
     Constructs the system prompt, injecting team skills context.
     """
@@ -26,12 +26,14 @@ def build_system_prompt():
                           "Your Correct Response: 'For questions about React, **user3@example.com** is the best person on our team to ask! They have it listed as one of their skills.'\n" \
                           "User: 'Who knows Docker?'\n" \
                           "Your Correct Response: 'That would be **user4@example.com**. They have experience with Docker and Kubernetes.'\n\n" \
+                          "And remeber if there is user name like manu.singh then always mention name first thjen email id.\n\n" \
                           "--- Team Skills List ---\n"
 
     # 3. Fetch the skills and combine
     try:
-        skills_data = fetchSkills() # e.g., "user1: Python, React\nuser2: Docker"
-        # print("Fetched team skills data:", skills_data)  # Debug print
+        skills_data = fetchSkills(team_id) # e.g., "user1: Python, React\nuser2: Docker"
+        print("Fetched team skills data:", skills_data)  # Debug print
+
         team_skills_context += skills_data
     except Exception as e:
         print(f"Error fetching team skills: {e}")
