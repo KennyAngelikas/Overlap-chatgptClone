@@ -4,28 +4,15 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0 maximum-scale=1.0" />
-    <meta name="description" content="A conversational AI system that listens, learns, and challenges" />
-    <meta property="og:title" content="OverLap AI Chat" />
-    <meta property="og:image" content="https://openai.com/content/images/2022/11/ChatGPT.jpg" />
-    <meta property="og:description" content="A conversational AI system that listens, learns, and challenges" />
-    <meta property="og:url" content="https://chat.acy.dev" />
+    <title>OverLap AI Chat - Welcome</title>
+    
     <link rel="stylesheet" href="/assets/css/style.css" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/assets/img/apple-touch-icon.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="/assets/img/favicon-32x32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/assets/img/favicon-16x16.png" />
-    <link rel="manifest" href="/assets/img/site.webmanifest" />
     <script src="/assets/js/icons.js"></script>
-    <script src="/assets/js/highlight.min.js"></script>
-    <script src="/assets/js/highlightjs-copy.min.js"></script>
     <script type="module" src="/assets/js/main.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/markdown-it@latest/dist/markdown-it.min.js"></script>
-    <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@latest/build/styles/base16/dracula.min.css" />
     <script>
-      window.user_image = `<img src="/assets/img/user.png" alt="User Avatar">`;
-      window.gpt_image = `<img src="/assets/img/gpt.png" alt="GPT Avatar">`;
-      window.conversation_id = `{{chat_id}}`;
+      window.FIREBASE_CONFIG = {{ firebase_config | tojson }};
     </script>
-    <title>OverLap AI Chat</title>
   </head>
   <body>
     <div id="landing-page" class="landing-page">
@@ -34,6 +21,8 @@
           <div class="landing-logo-mark">O</div>
           <span class="landing-logo-text">OverLap</span>
         </div>
+        
+        <button id="auth-btn" class="auth-btn">Sign In</button>
       </header>
 
       <main class="landing-hero">
@@ -48,9 +37,9 @@
           Experience AI conversations like never before. Beautiful, fast, and intelligent chat interface powered by cutting-edge language models.
         </p>
         <div class="landing-ctas">
-          <button id="start-chatting-btn" class="cta-primary">
-            Start Chatting <i class="fa-regular fa-arrow-right"></i>
-          </button>
+          <a href="/chat/" id="start-chatting-btn" class="cta-primary" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
+            Start Chatting <i class="fa-regular fa-arrow-right" style="margin-left: 8px;"></i>
+          </a>
           <button class="cta-secondary">Learn More</button>
         </div>
       </main>
@@ -76,249 +65,6 @@
       <footer class="landing-footer">
         Experience AI chats that feel human, focused, and delightful.
       </footer>
-    </div>
-
-    <div id="main-app" class="app-container" style="display: none;">
-      <div class="mobile-overlay" id="mobile-overlay"></div>
-      <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-          <div class="sidebar-logo">
-            <div class="logo-icon">O</div>
-            <h1 class="logo-text">OverLap</h1>
-          </div>
-          <button class="sidebar-close-btn" id="sidebar-close-btn" aria-label="Close sidebar">
-            <i class="fa-regular fa-x"></i>
-          </button>
-        </div>
-        <div class="sidebar-section">
-          <button class="new-conversation-btn" id="new-convo-button">
-            <i class="fa-regular fa-plus"></i>
-            <span>New Conversation</span>
-          </button>
-        </div>
-        <div class="sidebar-content" id="conversations">
-          <div id="conversation-list" class="conversation-list"></div>
-        </div>
-        <div class="sidebar-footer">
-          <button id="clear-conversations-button" class="sidebar-action-btn destructive">
-            <i class="fa-regular fa-trash"></i>
-            <span>Clear Conversations</span>
-          </button>
-        </div>
-      </aside>
-
-      <main class="chat-area">
-        <header class="chat-header">
-          <div class="chat-header-left">
-            <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Open menu">
-              <i class="fa-regular fa-bars"></i>
-            </button>
-          </div>
-          <div class="chat-header-center">
-            <div class="team-chip" id="team-chip">
-              <div class="team-chip-icon">
-                <i class="fa-regular fa-users"></i>
-              </div>
-              <div class="team-chip-text">
-                <span class="team-chip-label">Active team</span>
-                <span class="team-chip-name" id="active-team-name">Personal space</span>
-              </div>
-              <i class="fa-regular fa-chevron-down"></i>
-            </div>
-          </div>
-          <div class="chat-header-right">
-            <span class="message-count" id="message-count">0 messages</span>
-            <button class="icon-button ghost" id="open-settings" aria-label="Open settings">
-              <i class="fa-regular fa-gear"></i>
-            </button>
-            <div class="user-pill">
-              <i class="fa-regular fa-user"></i>
-            </div>
-          </div>
-        </header>
-
-        <div class="messages-container" id="messages"></div>
-
-        <div class="stop-generating" id="stop-generating" style="display: none;">
-          <button id="cancelButton" class="stop-btn">
-            <span>Stop Generating</span>
-            <i class="fa-regular fa-stop"></i>
-          </button>
-        </div>
-
-        <div class="input-area">
-          <div class="input-container">
-            <textarea
-              id="message-input"
-              placeholder="Type your message... (Shift+Enter for new line)"
-              class="message-input"
-              rows="1"
-              oninput="resizeTextarea(this)"
-            ></textarea>
-            <button id="send-button" class="send-button" aria-label="Send message">
-              <i class="fa-regular fa-paper-plane-top"></i>
-            </button>
-          </div>
-        </div>
-      </main>
-    </div>
-
-    <div id="settings-drawer" class="settings-drawer">
-      <div class="settings-backdrop" id="settings-backdrop"></div>
-      <div class="settings-panel-card">
-        <div class="settings-header">
-          <div>
-            <p class="eyebrow">Workspace</p>
-            <h3>Settings</h3>
-            <p class="subhead">API keys, toggles, and teams in one calm space.</p>
-          </div>
-          <button id="close-settings" class="icon-button">
-            <i class="fa-regular fa-x"></i>
-          </button>
-        </div>
-        <div class="settings-tabs">
-          <button class="settings-tab active" data-tab="general">General</button>
-          <button class="settings-tab" data-tab="teams">Teams</button>
-        </div>
-        <div class="settings-body">
-          <section class="settings-section active" data-panel="general">
-            <div class="settings-card">
-              <div class="settings-card-head">
-                <div>
-                  <p class="eyebrow">API access</p>
-                  <h4>Private key</h4>
-                </div>
-                <span class="pill subtle">Local only</span>
-              </div>
-              <label class="field-label" for="api-key-input">Custom API key</label>
-              <div class="field-row">
-                <input type="password" id="api-key-input" placeholder="sk-..." class="field-input" />
-                <div class="field-actions">
-                  <button id="save-api-key-button" class="pill-btn primary">
-                    <i class="fa-regular fa-save"></i>
-                    <span>Save</span>
-                  </button>
-                  <button id="clear-api-key-button" class="pill-btn ghost">
-                    <i class="fa-regular fa-eraser"></i>
-                    <span>Clear</span>
-                  </button>
-                </div>
-              </div>
-              <div id="api-key-status" class="api-key-status"></div>
-            </div>
-            <div class="settings-grid">
-              <div class="settings-card">
-                <div class="settings-card-head">
-                  <div>
-                    <p class="eyebrow">Controls</p>
-                    <h4>Smart toggles</h4>
-                  </div>
-                </div>
-                <div class="toggle-row">
-                  <div>
-                    <p class="field-label">Live internet access</p>
-                    <p class="muted">Let the model reach the web when needed.</p>
-                  </div>
-                  <label class="switch">
-                    <input type="checkbox" id="toggle-internet" />
-                    <span class="slider"></span>
-                  </label>
-                </div>
-                <div class="toggle-row">
-                  <div>
-                    <p class="field-label">Dense layout</p>
-                    <p class="muted">Tighten spacing for long research sessions.</p>
-                  </div>
-                  <label class="switch">
-                    <input type="checkbox" id="toggle-compact" />
-                    <span class="slider"></span>
-                  </label>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section class="settings-section" data-panel="teams">
-            <div class="settings-card">
-              <div class="settings-card-head">
-                <div>
-                  <p class="eyebrow">Collaboration</p>
-                  <h4>Choose a team</h4>
-                </div>
-                <button id="refresh-teams-button" class="pill-btn ghost small">
-                  <i class="fa-regular fa-rotate-right"></i>
-                  <span>Refresh</span>
-                </button>
-              </div>
-              <div class="team-select-row">
-                <div class="select-shell">
-                  <label class="field-label" for="team-select">Team</label>
-                  <select id="team-select" class="field-select"></select>
-                </div>
-                <div class="team-meta" id="team-meta"></div>
-              </div>
-              <div class="team-actions-inline">
-                <button id="join-team-button" class="pill-btn success wide">
-                  <i class="fa-regular fa-badge-check"></i>
-                  <span>Join selected</span>
-                </button>
-                <div id="team-status" class="team-status compact"></div>
-              </div>
-            </div>
-
-            <div class="settings-grid">
-              <div class="settings-card">
-                <div class="settings-card-head">
-                  <div>
-                    <p class="eyebrow">Create</p>
-                    <h4>Spin up a team</h4>
-                  </div>
-                </div>
-                <label class="field-label" for="settings-team-name">Name</label>
-                <input type="text" id="settings-team-name" class="field-input" placeholder="e.g. Research Guild" />
-                <label class="field-label" for="settings-team-size">Member limit (optional)</label>
-                <input type="number" id="settings-team-size" min="1" class="field-input" placeholder="10" />
-                <button id="settings-create-team" class="pill-btn primary wide">
-                  <i class="fa-regular fa-plus"></i>
-                  <span>Create team</span>
-                </button>
-                <div id="settings-create-error" class="team-status error"></div>
-              </div>
-
-              <div class="settings-card">
-                <div class="settings-card-head">
-                  <div>
-                    <p class="eyebrow">Browse</p>
-                    <h4>All teams</h4>
-                  </div>
-                </div>
-                <div id="team-list" class="team-gallery"></div>
-              </div>
-            </div>
-          </section>
-        </div>
-      </div>
-    </div>
-
-    <div id="team-modal" class="team-modal">
-      <div class="team-modal-overlay" id="team-modal-overlay"></div>
-      <div class="team-modal-panel">
-        <div class="team-modal-header">
-          <h3>Create a team</h3>
-          <p>Spin up a new space for your class, project, or club.</p>
-        </div>
-        <div class="team-modal-body">
-          <label for="team-modal-name">Team name</label>
-          <input type="text" id="team-modal-name" placeholder="e.g. Robotics Club" />
-          <label for="team-modal-size">Number of members</label>
-          <input type="number" id="team-modal-size" min="1" inputmode="numeric" placeholder="5" />
-          <div id="team-modal-error" class="team-modal-error"></div>
-        </div>
-        <div class="team-modal-actions">
-          <button id="team-modal-cancel" class="ghost-btn">Cancel</button>
-          <button id="team-modal-confirm" class="primary-btn">Create team</button>
-        </div>
-      </div>
     </div>
   </body>
 </html>

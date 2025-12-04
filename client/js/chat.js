@@ -1,3 +1,8 @@
+/**
+ * chat.js
+ * Logic for the Chat Application (chat.html)
+ */
+
 import { streamConversation } from "./api.js";
 import * as store from "./store.js";
 import {
@@ -18,6 +23,7 @@ import {
 } from "./teams.js";
 import { message_id, uuid, resizeTextarea } from "./utils.js";
 
+// === GLOBAL STATE ===
 let currentAbort = null;
 let closeSidebarRef = null;
 let appInitialized = false;
@@ -29,15 +35,16 @@ const MOCK_MODE =
   location.hash &&
   location.hash.includes("local");
 
-// --- UTILS ---
-
+// === AUTH HELPERS ===
 function ensureUserIdentity() {
   let userId = localStorage.getItem("user_id");
+  let userEmail = localStorage.getItem("user_email");
+  
   if (!userId) {
+    // If we somehow got here without an ID, generate one
     userId = `user_${uuid().slice(0, 8)}`;
     localStorage.setItem("user_id", userId);
   }
-  let userEmail = localStorage.getItem("user_email");
   if (!userEmail) {
     userEmail = `${userId}@overlap.local`;
     localStorage.setItem("user_email", userEmail);
@@ -45,6 +52,7 @@ function ensureUserIdentity() {
   return { userId, userEmail };
 }
 
+// === UI HELPERS ===
 function showStopGenerating(show) {
   const stopEl = document.getElementById("stop-generating");
   if (stopEl) stopEl.style.display = show ? "block" : "none";
@@ -69,8 +77,6 @@ function closeSidebarIfMobile() {
   }
 }
 
-// --- TEAMS LOGIC ---
-
 function showTeamStatus(message, type = "info") {
   const status = document.getElementById("team-status");
   if (!status) return;
@@ -85,6 +91,7 @@ function showTeamStatus(message, type = "info") {
   }
 }
 
+// === TEAM LOGIC ===
 function updateActiveTeamChip() {
   const nameEl = document.getElementById("active-team-name");
   const metaEl = document.getElementById("team-meta");
@@ -133,7 +140,6 @@ function renderTeamSelect(list) {
     updateActiveTeamChip();
     renderTeamsList(list || teamsCache);
   };
-
   updateActiveTeamChip();
 }
 
@@ -158,9 +164,7 @@ function updateJoinButtonLabel(forceJoined = false) {
 }
 
 function renderTeamsList(list) {
-  const container =
-    document.getElementById("team-list") ||
-    document.getElementById("teams-placeholder");
+  const container = document.getElementById("team-list");
   if (!container) return;
   const selectedId = getSelectedTeamId();
   container.innerHTML = "";
@@ -182,7 +186,7 @@ function renderTeamsList(list) {
     info.className = "team-info";
     const nameEl = document.createElement("div");
     nameEl.className = "team-name";
-    nameEl.textContent = team.name || team.team_name || `Team ${team.id}`;
+    nameEl.textContent = team.name || `Team ${team.id}`;
     const meta = document.createElement("div");
     meta.className = "team-meta";
     meta.textContent = team.member_limit
@@ -217,12 +221,7 @@ function renderTeamsList(list) {
 async function refreshTeams() {
   try {
     teamsCache = await fetchTeamsList();
-    teamsCache.sort((a, b) => {
-      const aNum = Number(a.id);
-      const bNum = Number(b.id);
-      if (!Number.isNaN(aNum) && !Number.isNaN(bNum)) return aNum - bNum;
-      return `${a.id}`.localeCompare(`${b.id}`);
-    });
+    teamsCache.sort((a, b) => Number(a.id) - Number(b.id));
   } catch (err) {
     teamsCache = [];
   }
@@ -233,9 +232,9 @@ async function refreshTeams() {
 
 function openCreateTeamModal() {
   const modal = document.getElementById("team-modal");
-  const nameInput = document.getElementById("team-modal-name");
   if (!modal) return;
   modal.classList.add("active");
+  const nameInput = document.getElementById("team-modal-name");
   if (nameInput) {
     nameInput.value = "";
     nameInput.focus();
@@ -251,12 +250,9 @@ function closeCreateTeamModal(resetFields = false) {
   if (!modal) return;
   modal.classList.remove("active");
   if (resetFields) {
-    const err = document.getElementById("team-modal-error");
-    const nameInput = document.getElementById("team-modal-name");
-    const sizeInput = document.getElementById("team-modal-size");
-    if (err) err.textContent = "";
-    if (nameInput) nameInput.value = "";
-    if (sizeInput) sizeInput.value = "";
+    document.getElementById("team-modal-error").textContent = "";
+    document.getElementById("team-modal-name").value = "";
+    document.getElementById("team-modal-size").value = "";
   }
 }
 
@@ -273,12 +269,7 @@ async function handleCreateTeamSubmit() {
     if (errorEl) errorEl.textContent = "Please enter a team name.";
     return;
   }
-  if (rawLimit && (!Number.isInteger(memberLimit) || memberLimit < 1)) {
-    if (errorEl) errorEl.textContent = "Member count must be a positive number.";
-    return;
-  }
-
-  if (errorEl) errorEl.textContent = "";
+  
   if (confirmBtn) {
     confirmBtn.disabled = true;
     confirmBtn.textContent = "Creating...";
@@ -286,9 +277,7 @@ async function handleCreateTeamSubmit() {
 
   try {
     const result = await createTeamRecord(name, memberLimit);
-    if (!result.success || !result.team) {
-      throw new Error(result.error || "Unable to create team.");
-    }
+    if (!result.success || !result.team) throw new Error(result.error);
     setSelectedTeamId(result.team.id);
     await refreshTeams();
     showTeamStatus(`Created ${result.team.name}`, "success");
@@ -317,12 +306,7 @@ async function handleCreateTeamInline() {
     if (statusEl) statusEl.textContent = "Give your team a name.";
     return;
   }
-  if (rawLimit && (!Number.isInteger(memberLimit) || memberLimit < 1)) {
-    if (statusEl) statusEl.textContent = "Member count must be a positive number.";
-    return;
-  }
 
-  if (statusEl) statusEl.textContent = "";
   if (createBtn) {
     createBtn.disabled = true;
     createBtn.textContent = "Creating...";
@@ -330,7 +314,7 @@ async function handleCreateTeamInline() {
 
   try {
     const result = await createTeamRecord(name, memberLimit);
-    if (!result.success || !result.team) throw new Error(result.error || "Unable to create team.");
+    if (!result.success || !result.team) throw new Error(result.error);
     setSelectedTeamId(result.team.id);
     if (nameInput) nameInput.value = "";
     if (sizeInput) sizeInput.value = "";
@@ -359,16 +343,13 @@ async function handleJoinSelectedTeam() {
   showTeamStatus("Joining team...", "info");
   try {
     const result = await joinTeamRecord(selectedId, userId, userEmail);
-    if (!result.success) throw new Error(result.error || "Unable to join team.");
+    if (!result.success) throw new Error(result.error);
     localStorage.setItem("team_id", selectedId);
-    showTeamStatus(
-      `You have joined ${selectedTeam?.name || "this team"}`,
-      "success"
-    );
+    showTeamStatus(`You have joined ${selectedTeam?.name}`, "success");
     updateJoinButtonLabel(true);
     updateActiveTeamChip();
   } catch (err) {
-    showTeamStatus(err.message || "Could not join team.", "error");
+    showTeamStatus(err.message, "error");
   } finally {
     if (joinBtn) joinBtn.disabled = false;
   }
@@ -394,8 +375,7 @@ function initTeamsPanel() {
   refreshTeams();
 }
 
-// --- CHAT LOGIC ---
-
+// === CHAT LOGIC ===
 async function handleSend() {
   const inputEl = document.getElementById("message-input");
   if (!inputEl) return;
@@ -420,7 +400,6 @@ async function handleSend() {
   currentAbort = new AbortController();
 
   const customApiKey = localStorage.getItem("custom_api_key");
-
   const { userId } = ensureUserIdentity();
   const teamId = localStorage.getItem("team_id") || null;
 
@@ -438,8 +417,7 @@ async function handleSend() {
       },
       content: {
         conversation: (await store.getConversation(convId)).messages,
-        internet_access:
-          document.getElementById("toggle-internet")?.checked || false,
+        internet_access: document.getElementById("toggle-internet")?.checked || false,
         content_type: "text",
         parts: [{ content: text, role: "user" }],
       },
@@ -450,34 +428,10 @@ async function handleSend() {
 
   let acc = "";
   if (MOCK_MODE) {
-    const simulated = `Echo: ${text}\n\n(This is a local UI-only simulated response.)`;
-    const chunks = [];
-    for (let i = 0; i < simulated.length; i += 20)
-      chunks.push(simulated.slice(i, i + 20));
-
-    try {
-      for (const c of chunks) {
-        if (currentAbort && currentAbort.signal.aborted)
-          throw new DOMException("Aborted", "AbortError");
-        await new Promise((r) => setTimeout(r, 120));
-        acc += c;
-        renderAssistantChunk(token, acc);
-      }
-      store.addMessage(convId, "assistant", acc);
-      updateMessageCount((await store.getConversation(convId)).messages.length);
-    } catch (err) {
-      if (err.name === "AbortError") {
-        renderAssistantChunk(token, acc + " [aborted]");
-      } else {
-        showError("Local mock failed");
-        console.error(err);
-        renderAssistantChunk(token, acc + " [error]");
-      }
-    } finally {
-      currentAbort = null;
-      showStopGenerating(false);
-      scrollToBottom(true);
-    }
+    const simulated = `Echo: ${text}\n\n(Local simulated response.)`;
+    renderAssistantChunk(token, simulated);
+    store.addMessage(convId, "assistant", simulated);
+    showStopGenerating(false);
     return;
   }
 
@@ -497,7 +451,7 @@ async function handleSend() {
     if (err.name === "AbortError") {
       renderAssistantChunk(token, acc + " [aborted]");
     } else {
-      showError("Failed to get response from server");
+      showError("Failed to get response");
       console.error(err);
       renderAssistantChunk(token, acc + " [error]");
     }
@@ -530,15 +484,16 @@ async function setConversation(id, conv) {
   setActiveConversation(id);
 }
 
-// --- INITIALIZATION ---
-
+// === INIT CHAT APP ===
 async function init() {
-  // CRITICAL CHECK: Only run this logic if we are on the Chat App page
-  const mainApp = document.getElementById("main-app");
-  if (!mainApp) return; 
-
   if (appInitialized) return;
   appInitialized = true;
+
+  // SECURITY: Kick to landing page if not logged in
+  if (!localStorage.getItem("user_id")) {
+    window.location.href = "/";
+    return;
+  }
 
   const sendBtn = document.getElementById("send-button");
   const cancelBtn = document.getElementById("cancelButton");
@@ -555,39 +510,26 @@ async function init() {
     });
   }
 
-  const listEl =
-    document.getElementById("conversation-list") ||
-    document.getElementById("conversations");
-    
-  const handlers = {
-    onSelect: async (id) => {
-      const c = await store.getConversation(id);
-      if (c) setConversation(id, c);
-      closeSidebarIfMobile();
-    },
-    onDelete: async (id) => {
-      await store.deleteConversation(id);
-      const l2 = await store.listConversations();
-      if (listEl) {
-        renderConversationList(listEl, l2, handlers);
-        setActiveConversation(window.conversation_id);
-      }
-    },
-    onShowOption: () => {},
-  };
-
+  // Load Conversations
+  const listEl = document.getElementById("conversation-list");
   if (listEl) {
+    const handlers = {
+      onSelect: async (id) => {
+        const c = await store.getConversation(id);
+        setConversation(id, c);
+        closeSidebarIfMobile();
+      },
+      onDelete: async (id) => {
+        await store.deleteConversation(id);
+        const l2 = await store.listConversations();
+        renderConversationList(listEl, l2, handlers);
+      },
+    };
     const list = await store.listConversations();
     renderConversationList(listEl, list, handlers);
-    if (window.conversation_id) setActiveConversation(window.conversation_id);
   }
 
-  if (inputEl) {
-    try {
-      inputEl.focus();
-    } catch (e) {}
-  }
-
+  // New Conversation Button
   const newBtn = document.getElementById("new-convo-button");
   if (newBtn) {
     newBtn.addEventListener("click", async () => {
@@ -595,193 +537,74 @@ async function init() {
       window.conversation_id = id;
       store.addConversation(id, "New chat");
       clearMessages();
-      const list = await store.listConversations();
+      // Reload list to highlight new chat
       if (listEl) {
-        renderConversationList(listEl, list, handlers);
-        setActiveConversation(id);
+          const list = await store.listConversations();
+          // handlers is defined in scope above, careful. 
+          // Re-defining briefly for safety or moving handlers out is better.
+          // For now, reloading page is simplest or just assume list refresh:
+          window.location.reload(); 
       }
-      if (inputEl) {
-        try {
-          inputEl.focus();
-        } catch (e) {}
-      }
+      inputEl?.focus();
     });
   }
-
+    
+  // Clear All Button
   const clearBtn = document.getElementById("clear-conversations-button");
-  if (clearBtn) {
-    clearBtn.addEventListener("click", async () => {
-      store.clearConversations();
-      clearMessages();
-      if (listEl) renderConversationList(listEl, [], handlers);
-      updateMessageCount(0);
-    });
+  if(clearBtn) {
+      clearBtn.addEventListener("click", async () => {
+          store.clearConversations();
+          clearMessages();
+          if(listEl) listEl.innerHTML = "";
+      });
   }
 
+  // Initialize Modules
   initTeamsPanel();
-  initMobileSidebar();
-  initStopGeneratingButton();
-  initApiKeySettings();
-  initSettingsDrawer();
+  initSidebar();
+  initSettings();
   applyCompactMode();
-  initLogoNavigation();
 }
 
-function initMobileSidebar() {
-  const sidebar = document.getElementById("sidebar");
-  const overlay = document.getElementById("mobile-overlay");
-  const openBtn = document.getElementById("mobile-menu-btn");
-  const closeBtn = document.getElementById("sidebar-close-btn");
+function initSidebar() {
+    const sidebar = document.getElementById("sidebar");
+    const overlay = document.getElementById("mobile-overlay");
+    const openBtn = document.getElementById("mobile-menu-btn");
+    const closeBtn = document.getElementById("sidebar-close-btn");
 
-  if (!sidebar || !overlay) return;
-
-  function openSidebar() {
-    sidebar.classList.add("open");
-    overlay.classList.add("active");
-  }
-
-  function closeSidebar() {
-    sidebar.classList.remove("open");
-    overlay.classList.remove("active");
-  }
-
-  closeSidebarRef = closeSidebar;
-
-  if (openBtn) openBtn.addEventListener("click", openSidebar);
-  if (closeBtn) closeBtn.addEventListener("click", closeSidebar);
-  overlay.addEventListener("click", closeSidebar);
+    if(openBtn) openBtn.addEventListener("click", () => sidebar.classList.add("open"));
+    if(closeBtn) closeBtn.addEventListener("click", () => sidebar.classList.remove("open"));
+    if(overlay) overlay.addEventListener("click", () => sidebar.classList.remove("open"));
+    closeSidebarRef = () => sidebar.classList.remove("open");
 }
 
-function initStopGeneratingButton() {
-  const cancelBtn = document.getElementById("cancelButton");
-  if (cancelBtn) {
-    cancelBtn.addEventListener("click", () => showStopGenerating(false));
-  }
-  showStopGenerating(false);
-}
-
-function initApiKeySettings() {
-  const apiKeyInput = document.getElementById("api-key-input");
-  const saveBtn = document.getElementById("save-api-key-button");
-  const clearBtn = document.getElementById("clear-api-key-button");
-  const statusDiv = document.getElementById("api-key-status");
-
-  const savedApiKey = localStorage.getItem("custom_api_key");
-  if (savedApiKey && apiKeyInput) {
-    apiKeyInput.value = savedApiKey;
-    apiKeyInput.style.borderColor = "var(--accent-start)";
-  }
-
-  if (saveBtn && apiKeyInput) {
-    saveBtn.addEventListener("click", () => {
-      const apiKey = apiKeyInput.value.trim();
-      if (apiKey) {
-        localStorage.setItem("custom_api_key", apiKey);
-        apiKeyInput.style.borderColor = "var(--accent-start)";
-        showApiKeyStatus(statusDiv, "API key saved successfully", "success");
-      } else {
-        apiKeyInput.style.borderColor = "";
-        showApiKeyStatus(statusDiv, "Please enter an API key", "error");
-      }
-    });
-  }
-
-  if (clearBtn && apiKeyInput) {
-    clearBtn.addEventListener("click", () => {
-      apiKeyInput.value = "";
-      apiKeyInput.style.borderColor = "";
-      localStorage.removeItem("custom_api_key");
-      showApiKeyStatus(statusDiv, "API key cleared", "success");
-    });
-  }
-}
-
-function initSettingsDrawer() {
-  const drawer = document.getElementById("settings-drawer");
-  const backdrop = document.getElementById("settings-backdrop");
-  const openBtn = document.getElementById("open-settings");
-  const closeBtn = document.getElementById("close-settings");
-  const tabs = Array.from(document.querySelectorAll(".settings-tab"));
-  const sections = Array.from(document.querySelectorAll(".settings-section"));
-  const internetToggle = document.getElementById("toggle-internet");
-  const compactToggle = document.getElementById("toggle-compact");
-  const teamChip = document.getElementById("team-chip");
-
-  const savedInternet = localStorage.getItem("overlap_internet_enabled");
-  if (internetToggle) {
-    internetToggle.checked = savedInternet === "true";
-    internetToggle.addEventListener("change", () => {
-      localStorage.setItem("overlap_internet_enabled", internetToggle.checked ? "true" : "false");
-    });
-  }
-
-  const savedCompact = localStorage.getItem("overlap_compact_mode") === "true";
-  if (compactToggle) {
-    compactToggle.checked = savedCompact;
-    compactToggle.addEventListener("change", () => {
-      localStorage.setItem("overlap_compact_mode", compactToggle.checked ? "true" : "false");
-      applyCompactMode();
-    });
-  }
-
-  function setTab(tab) {
-    tabs.forEach((t) => t.classList.toggle("active", t.dataset.tab === tab));
-    sections.forEach((section) =>
-      section.classList.toggle("active", section.dataset.panel === tab)
-    );
-  }
-
-  function open(tab = "general") {
-    if (!drawer) return;
-    drawer.classList.add("open");
-    setTab(tab);
-  }
-
-  function close() {
-    drawer?.classList.remove("open");
-  }
-
-  if (openBtn) openBtn.addEventListener("click", () => open());
-  if (teamChip) teamChip.addEventListener("click", () => open("teams"));
-  if (closeBtn) closeBtn.addEventListener("click", close);
-  if (backdrop) backdrop.addEventListener("click", close);
-  tabs.forEach((tabBtn) =>
-    tabBtn.addEventListener("click", () => open(tabBtn.dataset.tab || "general"))
-  );
+function initSettings() {
+    const drawer = document.getElementById("settings-drawer");
+    const openBtn = document.getElementById("open-settings");
+    const closeBtn = document.getElementById("close-settings");
+    if(openBtn) openBtn.addEventListener("click", () => drawer.classList.add("open"));
+    if(closeBtn) closeBtn.addEventListener("click", () => drawer.classList.remove("open"));
+    
+    // Toggles
+    const toggleInternet = document.getElementById("toggle-internet");
+    if(toggleInternet) {
+        toggleInternet.checked = localStorage.getItem("overlap_internet_enabled") === "true";
+        toggleInternet.addEventListener("change", () => {
+            localStorage.setItem("overlap_internet_enabled", toggleInternet.checked);
+        });
+    }
 }
 
 function applyCompactMode() {
-  const compact = localStorage.getItem("overlap_compact_mode") === "true";
-  document.body.classList.toggle("compact-mode", compact);
+    if(localStorage.getItem("overlap_compact_mode") === "true") {
+        document.body.classList.add("compact-mode");
+    }
 }
 
-function showApiKeyStatus(node, message, type) {
-  if (!node) return;
-  node.textContent = message;
-  node.className = `api-key-status ${type}`;
-  setTimeout(() => {
-    node.textContent = "";
-    node.className = "api-key-status";
-  }, 2500);
-}
-
-function initLogoNavigation() {
-  const sidebarLogo = document.querySelector(".sidebar-logo");
-  // Only apply this if we are on the Chat page (which has .sidebar-logo)
-  if (sidebarLogo) {
-    sidebarLogo.style.cursor = "pointer";
-    // Redirect to Landing Page
-    sidebarLogo.addEventListener("click", () => window.location.href = "index.html");
-  }
-}
-
-// MAIN ENTRY POINT
-window.addEventListener("load", () => {
-  // Check if we are on the chat application page
+// === ENTRY POINT ===
+document.addEventListener("DOMContentLoaded", () => {
+  // Only run if we are on the Chat App page
   if (document.getElementById("main-app")) {
     init().catch(console.error);
   }
-  
-  // Note: We do not need JS logic for the landing page anymore 
-  // because the "Start Chatting" button is now a standard HTML Link.
 });
